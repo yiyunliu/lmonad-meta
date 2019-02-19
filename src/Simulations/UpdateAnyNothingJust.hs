@@ -107,11 +107,11 @@ simulationsUpdateRowNothingJust l lc lφ ti p l2 v2 r@(Row k v1 _)
   | field1Label ti `canFlowTo` l
   =   εRow l ti r
         ? assert (updateRowCheckNothingJust lc lφ ti p l2 v2 r)
-        ? assert (updateRowLabel2 lc lφ ti p (field1Label ti) v1 l2 v2 r)
+        ? use (updateRowLabel2 lc lφ ti p (field1Label ti) v1 l2 v2 r)
         ? joinCanFlowTo (l2 `join` lc) lφ (makeValLabel ti v1)
         ? joinCanFlowTo l2 lc (makeValLabel ti v1)
         ? lawFlowTransitivity lc (makeValLabel ti v1) l
-        ? assert (not (makeValLabel ti v1 `canFlowTo` l) )
+        ? use (not (makeValLabel ti v1 `canFlowTo` l) )
   ==. Row k (εTerm l v1) THole
   ==. εRow l ti (updateRowNothingJust p v2 r)
   *** QED

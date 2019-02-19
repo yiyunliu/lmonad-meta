@@ -6,7 +6,7 @@ import Labels
 import Predicates 
 import Prelude hiding (Maybe(..), fromJust, isJust)
 import Programs 
-
+import Simulations.Predicates
 import ProofCombinators 
 
 {-@ 
@@ -19,7 +19,7 @@ updateRowsCheckEqNothingJust
   -> p:Pred
   -> l2:l
   -> v2:SDBTerm l
-  -> rs:[Row l]
+  -> rs: {[Row l] | updateRowsCheckNothingJust lc lf ti p l2 v2 rs || updateRowsCheckNothingJust lc lf ti p l2 (if (canFlowTo l2 l) then (εTerm l v2) else THole) (εRows l ti rs)} 
   -> {(updateRowsCheckNothingJust lc lf ti p l2 v2 rs ==
         updateRowsCheckNothingJust lc lf ti p l2 (if (canFlowTo l2 l) then (εTerm l v2) else THole) (εRows l ti rs)) }
   / [len rs] @-}
@@ -54,13 +54,14 @@ updateRowCheckEqNothingJust
   -> p:Pred
   -> l2:l
   -> v2:SDBTerm l
-  -> r: Row l
+  -> r: {Row l | (canFlowTo (lfRow p ti r) lf) && (updateRowCheckNothingJust lc lf ti p l2 v2 r || updateRowCheckNothingJust lc lf ti p l2 (if (canFlowTo l2 l) then (εTerm l v2) else THole) (εRow l ti r))}
   -> {(updateRowCheckNothingJust lc lf ti p l2 v2 r ==
         updateRowCheckNothingJust lc lf ti p l2 (if (canFlowTo l2 l) then (εTerm l v2) else THole) (εRow l ti r))}
 @-}
 
 updateRowCheckEqNothingJust :: (Eq l, Label l) => l -> l -> l -> TInfo l -> Pred -> l -> Term l -> Row l -> Proof
-updateRowCheckEqNothingJust l lc lφ ti p l2 v2 r@(Row k v1 _) 
+updateRowCheckEqNothingJust l lc lφ ti p l2 v2 r@(Row k v1 _)
+  | canFlowTo (labelPredRow p ti r) l
   =   updateRowCheckNothingJust lc lφ ti p l2 v2 r
   ==. updateRowLabel2 lc lφ ti p (field1Label ti) v1 l2 v2 r
   ==. ((l2 `join` lc) `join` lφ) `canFlowTo` makeValLabel ti v1
@@ -69,10 +70,33 @@ updateRowCheckEqNothingJust l lc lφ ti p l2 v2 r@(Row k v1 _)
   ==. ((l2 `join` lc) `join` lφ) `canFlowTo` makeValLabel ti (rowField1 (εRow l ti r))
   ==. updateRowLabel2 lc lφ ti p (field1Label ti) (rowField1 (εRow l ti r)) l2 εv2 (εRow l ti r)
   ==. updateRowCheckNothingJust lc lφ ti p l2 εv2 (εRow l ti r)
-  ==. updateRowCheckNothingJust lc lφ ti p l2 (if (canFlowTo l2 l) then (εTerm l v2) else THole) (εRow l ti r)
+      ? simulationsEvalPred p r l ti
   *** QED
-  where εv1 = if (canFlowTo (field1Label ti) l) then (εTerm l v1) else THole
-        εv2 = if (canFlowTo l2 l) then (εTerm l v2) else THole
+  | not (pDep2 p)
+  =   ()
+  | updateRowCheckNothingJust lc lφ ti p l2 εv2 (εRow l ti r)
+  -- dependent on 2, and labelPredRow not satisfied
+  =   updateRowCheckNothingJust lc lφ ti p l2 εv2 (εRow l ti r)
+      ? joinCanFlowTo (field1Label ti) (makeValLabel ti (rowField1 r)) l
+      ? assert (not (canFlowTo (makeValLabel ti (rowField1 r)) l))
+      ? joinCanFlowTo (l2 `join` lc) lφ (makeValLabel ti v1)
+      -- ? lawFlowTransitivity (makeValLabel ti (rowField1 r)) 
+      ? use (lφ `canFlowTo`  (makeValLabel ti v1))
+  ==. updateRowCheckNothingJust lc lφ ti p l2 εv2 εr
+      ? (evalPred p r *** QED )
+      ? (evalPred p (εRow l ti r) *** QED )
+      ? (evalPred p εr *** QED )
+      ? globals
+      -- false
+  ==. updateRowCheckNothingJust lc lφ ti p l2 v2 r
+  *** QED
+  | otherwise
+  =   ()
+ where εv1 = if (canFlowTo (field1Label ti) l) then (εTerm l v1) else THole
+       εv2 = if (canFlowTo l2 l) then (εTerm l v2) else THole
+       εr  = Row k (εTerm l v1) THole
+        
+        
 
         
 
@@ -84,7 +108,8 @@ labelUpdateCheckEqNothingJust
   -> p:Pred
   -> l2:l
   -> v2:SDBTerm l
-  -> t:{Table l | canFlowTo (tableLabel (tableInfo t)) l }
+  -> t:{Table l | canFlowTo (tableLabel (tableInfo t)) l &&
+        (updateLabelCheckNothingJust lc t p l2 v2 || updateLabelCheckNothingJust lc (εTable l t) p l2 (if (canFlowTo l2 l) then (εTerm l v2) else THole))}
   -> { (canFlowTo (field1Label (tableInfo t))  l) 
   => updateLabelCheckNothingJust lc t p l2 v2 == updateLabelCheckNothingJust lc (εTable l t) p l2 (if (canFlowTo l2 l) then (εTerm l v2) else THole) }
 @-}

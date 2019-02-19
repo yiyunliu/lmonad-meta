@@ -148,6 +148,43 @@ updateRow :: Pred -> Term l -> Term l -> Row l -> Row l
 updateRow p v1 v2 r@(Row k _ _) = if evalPred p r then Row k v1 v2 else r 
 
 
+{-@ reflect updateDBJN @-}
+{-@ updateDBJN
+  :: DB l 
+  -> TName 
+  -> Pred 
+  -> SDBTerm l  
+  -> DB l @-}
+updateDBJN :: DB l -> TName -> Pred ->  Term l -> DB l 
+updateDBJN [] n p v1 = []
+updateDBJN ((Pair n' t@(Table ti rs)):ts) n p v1
+  | n == n'
+  = Pair n (Table ti (updateRowsJN p v1 rs)):ts
+  | otherwise
+  = Pair n' t:updateDBJN ts n p v1
+
+{-@ reflect updateRowsJN @-}
+updateRowsJN :: Pred -> Term l -> [Row l] -> [Row l] 
+{-@ updateRowsJN
+  :: Pred 
+  -> SDBTerm l 
+  -> rs:[Row l] 
+  -> [Row l] 
+  / [len rs] @-} 
+updateRowsJN _ _ [] = [] 
+updateRowsJN p v1 (r@(Row k _ _):rs)
+  = updateRowJN p v1 r :updateRowsJN p v1 rs
+
+{-@ reflect updateRowJN @-}
+updateRowJN :: Pred -> Term l -> Row l -> Row l 
+{-@ updateRowJN
+  :: Pred 
+  -> SDBTerm l 
+  -> rs:Row l 
+  -> Row l @-} 
+updateRowJN p v1 r@(Row k _ o2) = if evalPred p r then Row k v1 o2 else r 
+
+
 {-@ reflect updateDBNothingJust @-}
 updateDBNothingJust :: DB l -> TName -> Pred -> Term l -> DB l 
 {-@ updateDBNothingJust
@@ -239,7 +276,26 @@ updateRowsCheckNothingJust lc lφ ti p l2 v2 (r:rs) =
   updateRowCheckNothingJust lc lφ ti p l2 v2 r &&
   updateRowsCheckNothingJust lc lφ ti p l2 v2 rs
 
+{-@ reflect updateLabelCheckJN @-}
+updateLabelCheckJN :: (Label l, Eq l) => l -> Table l -> Pred -> l -> Term l -> Bool 
+updateLabelCheckJN lc t@(Table ti rs) p l1 v1
+  = updateRowsCheckJN lc (lfTable p t) ti p l1 v1 rs 
 
+
+{-@ reflect updateRowsCheckJN @-}
+updateRowsCheckJN :: (Label l, Eq l) => l -> l -> TInfo l -> Pred -> l -> Term l -> [Row l] -> Bool 
+{-@ updateRowsCheckJN :: (Label l, Eq l) => l -> l -> TInfo l -> Pred -> l -> Term l -> rs:[Row l] -> Bool / [len rs] @-}
+updateRowsCheckJN _ _ _ _ _ _ []            = True 
+updateRowsCheckJN lc lφ ti p l1 v1 (r:rs) | evalPred p r
+  = updateRowCheckJN lc lφ ti p l1 v1 r && updateRowsCheckJN lc lφ ti p l1 v1 rs
+updateRowsCheckJN lc lφ ti p l1 v1 (r:rs)
+  = updateRowsCheckJN lc lφ ti p l1 v1 rs
+
+{-@ reflect updateRowCheckJN @-}
+updateRowCheckJN :: (Label l, Eq l) => l -> l -> TInfo l -> Pred -> l -> Term l -> Row l -> Bool 
+updateRowCheckJN lc lφ ti p l1 v1 r@(Row k _ o2)
+  =  (updateRowLabel1 lc lφ ti p l1 v1 (makeValLabel ti v1) o2 r)
+   && (updateRowLabel2 lc lφ ti p l1 v1 (makeValLabel ti v1) o2 r)
 
 {-@ reflect updateLabelCheck @-}
 updateLabelCheck :: (Label l, Eq l) => l -> Table l -> Pred -> l -> Term l -> l -> Term l -> Bool 
@@ -263,7 +319,7 @@ updateRowCheck lc lφ ti p l1 v1 l2 v2 r
 {-@ reflect updateRowCheckNothingJust @-}
 updateRowCheckNothingJust :: (Label l, Eq l) => l -> l -> TInfo l -> Pred -> l -> Term l -> Row l -> Bool 
 updateRowCheckNothingJust lc lφ ti p l2 v2 r@(Row _ v1 _)
-  =  updateRowLabel2 lc lφ ti p (field1Label ti) v1 l2 v2 r
+  =  if evalPred p r then updateRowLabel2 lc lφ ti p (field1Label ti) v1 l2 v2 r else True
 
 {-@ reflect updateRowLabel1 @-}
 updateRowLabel1
@@ -459,6 +515,24 @@ eval (Pg lc db (TUpdate n (TPred p) TNothing (TJust (TLabeled l2 v2))))
     in Pg lc' db (TReturn TException)
     
 eval (Pg lc db (TUpdate n (TPred p) TNothing (TJust (TLabeled _ _))))   
+  = Pg lc db TException
+
+
+eval (Pg lc db (TUpdate n (TPred p) (TJust (TLabeled l1 v1)) TNothing))   
+  | Just t <- lookupTable n db 
+  , updateLabelCheckJN lc t p l1 v1
+  = let lc' = lc `join` ((field1Label (tableInfo t) `join` l1) -- this is for TUpdateFound.C1
+                         `join` tableLabel (tableInfo t))      -- this is for TUpdateFound.C2
+    in 
+    Pg lc' (updateDBJN db n p v1) (TReturn TUnit)
+
+
+eval (Pg lc db (TUpdate n (TPred p) (TJust (TLabeled l1 v1)) TNothing))   
+  | Just t <- lookupTable n db 
+  = let lc' = lc `join` ((field1Label (tableInfo t) `join` l1) `join` tableLabel (tableInfo t))  in 
+    Pg lc' db (TReturn TException)
+
+eval (Pg lc db (TUpdate n (TPred p) (TJust (TLabeled _ _)) TNothing))   
   = Pg lc db TException
 
 
