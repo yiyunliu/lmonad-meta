@@ -287,7 +287,7 @@ updateRowsCheckNothingJust lc lφ ti p l2 v2 (r:rs) =
 {-@ reflect updateLabelCheckJN @-}
 updateLabelCheckJN :: (Label l, Eq l) => l -> Table l -> Pred -> l -> Term l -> Bool 
 updateLabelCheckJN lc t@(Table ti rs) p l1 v1
-  = updateRowsCheckJN lc (lfTable p t) ti p l1 v1 rs 
+  = updateRowsCheckJN lc (labelPred p t) ti p l1 v1 rs 
 
 
 {-@ reflect updateRowsCheckJN @-}
@@ -373,6 +373,8 @@ labelPredField2Rows :: (Eq l, Label l) => Pred -> TInfo l -> [Row l] -> l
 labelPredField2Rows p ti []     = bot
 labelPredField2Rows p ti (r:rs) = labelPredField2Row p ti r `join` labelPredField2Rows p ti rs
 
+
+{-@ reflect labelPredField2Row @-}
 labelPredField2Row :: (Eq l, Label l) => Pred -> TInfo l -> Row l -> l
 labelPredField2Row p ti r = makeValLabel ti (rowField1 r)
 

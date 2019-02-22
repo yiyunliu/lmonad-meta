@@ -16,23 +16,22 @@ import Prelude hiding (Maybe(..), fromJust, isJust)
  :: p : Pred
  -> r : Row l
  -> l : l
- -> ti : {TInfo l | canFlowTo (labelPredRow p ti r) l }
+ -> ti : {TInfo l | (pDep2 p => canFlowTo (join (field1Label ti) (labelPredField2Row p ti r)) l)
+                   && (pDep1 p => canFlowTo (field1Label ti) l )}
  -> { evalPred p r == evalPred p (εRow l ti r) }
  @-}
 simulationsEvalPred :: (Eq l, Label l) => Pred -> Row l -> l -> TInfo l -> Proof
 simulationsEvalPred p r@(Row k v1 v2) l ti 
-  | pDep1 p && pDep2 p
+  | pDep2 p
   =   evalPred p (εRow l ti r)
-      ? assert (canFlowTo (labelPredRow p ti r) l)
-      ? assert (labelPredRow p ti r == (field1Label ti `join` makeValLabel ti (rowField1 r)))
+      ? assert (canFlowTo (field1Label ti `join` labelPredField2Row p ti r)  l)
       ? joinCanFlowTo (field1Label ti) (makeValLabel ti (rowField1 r)) l 
   ==. evalPred p (Row k (εTerm l v1) (εTerm l v2))
   ==. evalPred p r
   *** QED 
   | pDep1 p
   =   evalPred p (εRow l ti r)
-      ? assert (canFlowTo (labelPredRow p ti r) l)
-      ? assert (labelPredRow p ti r == field1Label ti)
+      ? assert (canFlowTo (field1Label ti) l)
   ==. evalPred p (Row k (εTerm l v1) v2')
   ==. evalPredicate p (εTerm l v1)
   ==. evalPredicate p v1

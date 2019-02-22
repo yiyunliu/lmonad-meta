@@ -35,9 +35,9 @@ monotonicEval pg@(Pg lc db (TUpdate n _ _ _))
 monotonicEval pg@(Pg lc db (TSelect n tp)) 
   | Just t <- lookupTable n db 
   , TPred p <- tp 
-  = let lc' = lc `join` labelSelectTable p t in 
+  = let lc' = lc `join` tableLabel (tableInfo t) `join` labelPred p t in 
     if (pLabel (eval pg) == lc') 
-      then lawJoin lc' lc (labelSelectTable p t) lc'
+      then lawJoin lc' lc (tableLabel (tableInfo t) `join` labelPred p t) lc'
       else lawFlowReflexivity lc
 monotonicEval pg@(Pg lc db (TSelect _ _))
   =   assert (pLabel (eval pg) == lc) 
@@ -46,9 +46,9 @@ monotonicEval pg@(Pg lc db (TSelect _ _))
 monotonicEval pg@(Pg lc db (TDelete n tp)) 
   | Just t  <- lookupTable n db 
   , TPred p <- tp 
-  = let lc' = lc `join` labelReadTable p (tableInfo t) in 
+  = let lc' = lc `join` labelRead p t in 
     if (pLabel (eval pg) == lc') 
-      then lawJoin lc' lc (labelReadTable p (tableInfo t)) lc'
+      then lawJoin lc' lc (labelRead p t) lc'
       else lawFlowReflexivity lc
 monotonicEval pg@(Pg lc db (TDelete _ _))
   =   assert (pLabel (eval pg) == lc) 

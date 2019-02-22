@@ -10,23 +10,23 @@ import Programs
 import ProofCombinators 
 
 
-labelPredTableImplies :: (Label l, Eq l) => l -> Pred -> Table l -> Proof 
-{-@ labelPredTableImplies 
+labelReadImplies :: (Label l, Eq l) => l -> Pred -> Table l -> Proof 
+{-@ labelReadImplies 
   :: Label l 
   => l:l 
   -> p:Pred 
   -> t:Table l
-  -> { canFlowTo (labelPredTable p t) l => 
+  -> { canFlowTo (labelRead p t) l => 
        ( ((0 < len (tableRows t) && pDep1 p )=> canFlowTo (field1Label (tableInfo t)) l) && 
          canFlowTo (tableLabel (tableInfo t)) l )} @-}
-labelPredTableImplies l p t@(Table ti [])
-  | labelPredTable p t `canFlowTo` l 
+labelReadImplies l p t@(Table ti [])
+  | labelRead p t `canFlowTo` l 
   = tableLabelDep l p ti []
  
 
-labelPredTableImplies l p t@(Table ti (r:rs))
-  | labelPredTable p t `canFlowTo` l, pDep2 p 
-  =   labelPredTable p (Table ti (r:rs)) 
+labelReadImplies l p t@(Table ti (r:rs))
+  | labelRead p t `canFlowTo` l, pDep2 p 
+  =   labelRead p (Table ti (r:rs)) 
   ==. labelPredRows p ti (r:rs) 
   ==. (tableLabel ti `join` labelPredRow p ti r) `join` labelPredRows p ti rs
   ==. (tableLabel ti `join` (field1Label ti `join` makeValLabel ti (rowField1 r))) `join` labelPredRows p ti rs
@@ -36,9 +36,9 @@ labelPredTableImplies l p t@(Table ti (r:rs))
   ? joinCanFlowTo (tableLabel ti `join` labelPredRow p ti r) (labelPredRows p ti rs) l 
   ? joinCanFlowTo (field1Label ti) (makeValLabel ti (rowField1 r)) l 
 
-labelPredTableImplies l p t@(Table ti (r:rs))
-  | labelPredTable p t `canFlowTo` l 
-  =   labelPredTable p (Table ti (r:rs)) 
+labelReadImplies l p t@(Table ti (r:rs))
+  | labelRead p t `canFlowTo` l 
+  =   labelRead p (Table ti (r:rs)) 
   ==. labelPredRows p ti (r:rs) 
   ==. (tableLabel ti `join` labelPredRow p ti r) `join` labelPredRows p ti rs
   ==. (tableLabel ti `join` field1Label ti) `join` labelPredRows p ti rs
@@ -49,7 +49,7 @@ labelPredTableImplies l p t@(Table ti (r:rs))
 
 
 
-labelPredTableImplies l p t 
+labelReadImplies l p t 
   = () 
 
 
