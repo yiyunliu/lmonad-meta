@@ -273,7 +273,6 @@ updateRowsCheckNothingJust :: (Label l, Eq l) => l -> l -> TInfo l -> Pred -> l 
 -- todo: restructure it so v1 is examined in updateRowCheckNothingJust
 updateRowsCheckNothingJust _ _ _ _ _ _ []            = True 
 updateRowsCheckNothingJust lc lφ ti p l2 v2 (r:rs) =
-  updateRowCheckNothingJust lc lφ ti p l2 v2 r &&
   updateRowsCheckNothingJust lc lφ ti p l2 v2 rs
 
 {-@ reflect updateLabelCheckJN @-}
@@ -314,8 +313,8 @@ updateRowsCheck lc lφ ti p l1 v1 l2 v2 (r:rs) = updateRowCheck lc lφ ti p l1 v
 {-@ reflect updateRowCheck @-}
 updateRowCheck :: (Label l, Eq l) => l -> l -> TInfo l -> Pred -> l -> Term l -> l -> Term l -> Row l -> Bool 
 updateRowCheck lc lφ ti p l1 v1 l2 v2 r 
-  =  (updateRowLabel1 lc lφ ti p l1 v1 l2 v2 r)
-   && (updateRowLabel2 lc lφ ti p l1 v1 l2 v2 r)
+  = if evalPred r then  (updateRowLabel1 lc lφ ti p l1 v1 l2 v2 r)
+   && (updateRowLabel2 lc lφ ti p l1 v1 l2 v2 r) else True
 {-@ reflect updateRowCheckNothingJust @-}
 updateRowCheckNothingJust :: (Label l, Eq l) => l -> l -> TInfo l -> Pred -> l -> Term l -> Row l -> Bool 
 updateRowCheckNothingJust lc lφ ti p l2 v2 r@(Row _ v1 _)
@@ -487,13 +486,14 @@ eval p@(Pg lc db (TUpdate _ _ _ _))
   = Pg lc db TException
 eval (Pg lc db (TUpdate n (TPred p) (TJust (TLabeled l1 v1)) (TJust (TLabeled l2 v2))))   
   | Just t <- lookupTable n db 
-  , updateLabelCheck lc t p l1 v1 l2 v2 
+  , updateLabelCheck lc t p l1 v1 l2 v2 -- without evalPred
+  -- todo: tableLabel
   = let lc' = lc `join` ((field1Label (tableInfo t) `join` l1) -- this is for TUpdateFound.C1
                          `join` tableLabel (tableInfo t))      -- this is for TUpdateFound.C2
     in 
     Pg lc' (updateDB db n p v1 v2) (TReturn TUnit)
 eval (Pg lc db (TUpdate n (TPred p) (TJust (TLabeled l1 v1)) (TJust (TLabeled l2 v2))))   
-  | Just t <- lookupTable n db 
+  | Just t <- lookupTable n db
   = let lc' = lc `join` ((field1Label (tableInfo t) `join` l1) `join` tableLabel (tableInfo t))  in 
     Pg lc' db (TReturn TException)
 eval (Pg lc db (TUpdate n (TPred p) (TJust (TLabeled _ _)) (TJust (TLabeled _ _))))   
@@ -504,7 +504,8 @@ eval (Pg lc db (TUpdate n (TPred p) TNothing (TJust (TLabeled l2 v2))))
   , updateLabelCheckNothingJust lc t p l2 v2
   -- no need for label check since label info does not change
   = let lc' = lc `join` (field1Label (tableInfo t)
-                         `join` tableLabel (tableInfo t))
+                        -- 
+                         `join` labelReadTable p (tableInfo t))
     in Pg lc' (updateDBNothingJust db n p v2) (TReturn TUnit)
 
 eval (Pg lc db (TUpdate n (TPred p) TNothing (TJust (TLabeled l2 v2))))

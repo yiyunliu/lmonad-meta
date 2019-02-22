@@ -74,7 +74,7 @@ updateRowCheckEqNothingJust l lc lφ ti p l2 v2 r@(Row k v1 _)
   *** QED
   | not (pDep2 p)
   =   ()
-  | updateRowCheckNothingJust lc lφ ti p l2 εv2 (εRow l ti r)
+  | not (updateRowCheckNothingJust lc lφ ti p l2 εv2 (εRow l ti r))
   -- dependent on 2, and labelPredRow not satisfied
   =   updateRowCheckNothingJust lc lφ ti p l2 εv2 (εRow l ti r)
       ? joinCanFlowTo (field1Label ti) (makeValLabel ti (rowField1 r)) l
@@ -86,7 +86,6 @@ updateRowCheckEqNothingJust l lc lφ ti p l2 v2 r@(Row k v1 _)
       ? (evalPred p r *** QED )
       ? (evalPred p (εRow l ti r) *** QED )
       ? (evalPred p εr *** QED )
-      ? globals
       -- false
   ==. updateRowCheckNothingJust lc lφ ti p l2 v2 r
   *** QED
