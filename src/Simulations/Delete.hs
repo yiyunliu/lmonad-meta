@@ -104,7 +104,7 @@ simulationsDeleteRows :: (Eq l, Label l) => l -> Pred -> TInfo l -> [Row l] -> P
 
 simulationsDeleteRows l p ti rs 
   | not (tableLabel ti `canFlowTo` l)
-  = labelPredTableImplies l p (Table ti rs)
+  = labelReadImplies l p (Table ti rs)
 
 
 simulationsDeleteRows l p ti  [] 

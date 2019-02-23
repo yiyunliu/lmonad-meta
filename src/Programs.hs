@@ -322,11 +322,8 @@ updateRowsCheck lc lφ ti p l1 v1 l2 v2 (r:rs) = updateRowCheck lc lφ ti p l1 v
 {-@ reflect updateRowCheck @-}
 updateRowCheck :: (Label l, Eq l) => l -> l -> TInfo l -> Pred -> l -> Term l -> l -> Term l -> Row l -> Bool 
 updateRowCheck lc lφ ti p l1 v1 l2 v2 r 
-  | evalPred p r
   =  (updateRowLabel1 lc lφ ti p l1 v1 l2 v2 r)
   && (updateRowLabel2 lc lφ ti p l1 v1 l2 v2 r)
-  | otherwise
-  = True
 
 {-@ reflect updateRowCheckNothingJust @-}
 updateRowCheckNothingJust :: (Label l, Eq l) => l -> l -> TInfo l -> Pred -> l -> Term l -> Row l -> Bool 

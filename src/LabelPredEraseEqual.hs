@@ -21,10 +21,10 @@ labelPredEraseEqual :: (Eq l, Label l) => l -> Pred -> TName -> DB l -> Proof
 labelPredEraseEqual l p n db 
   = assert (isJust t )
   ? assert (isJust εt)
-  ? assert (canFlowTo (labelPredTable p (fromJust t)) l)
+  ? assert (canFlowTo (labelRead p (fromJust t)) l)
   ? LPE.labelPredErase l p n db 
-  ? assert (canFlowTo (labelPredTable p (fromJust εt)) l)
-  ? labelPredTableImplies l p (fromJust εt) 
+  ? assert (canFlowTo (labelRead p (fromJust εt)) l)
+  ? labelReadImplies l p (fromJust εt) 
   ? labelPredErase l p n db
   where 
     t  = lookupTable n db

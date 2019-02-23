@@ -102,15 +102,16 @@ labelUpdateCheckEq l lc p l1 v1 l2 v2 t@(Table ti@(TInfo lt _ lf1 _ _) rs)
    | canFlowTo (tableLabel ti) l && canFlowTo (join (field1Label (tableInfo t)) l1) l
   =   updateLabelCheck lc (εTable l (Table ti rs)) p l1 εv1 l2 εv2
   ==. updateLabelCheck lc (Table ti (εRows l ti rs)) p l1 εv1 l2 εv2
-  ==. updateRowsCheck lc (lfTable p (Table ti (εRows l ti rs))) ti p l1 εv1 l2 εv2 (εRows l ti rs)
+  ==. updateRowsCheck lc (labelPred p (Table ti (εRows l ti rs))) ti p l1 εv1 l2 εv2 (εRows l ti rs)
       ? joinCanFlowTo (field1Label (tableInfo t)) l1 l 
-      ? (   lfTable p (Table ti (εRows l ti rs))
-        ==. lfRows p ti rs 
-            ? lfRowsEq l p ti rs 
-        ==. lfRows p ti (εRows l ti rs)
-        ==. lfTable p (Table ti rs) *** QED ) 
-      ? labelUpdateCheckEqRows l lc (lfTable p t) p l1 v1 l2 v2 ti rs 
-  ==. updateRowsCheck (lfTable p (Table ti rs)) lc ti p l1 v1 l2 v2 rs
+      ? (   labelPred p (Table ti (εRows l ti rs))
+        -- ==. lfRows p ti rs 
+        --     ? lfRowsEq l p ti rs 
+        -- ==. lfRows p ti (εRows l ti rs)
+          ? labelPredField2RowsEq l p ti rs
+        ==. labelPred p (Table ti rs) *** QED ) 
+      ? labelUpdateCheckEqRows l lc (labelPred p t) p l1 v1 l2 v2 ti rs 
+  ==. updateRowsCheck (labelPred p (Table ti rs)) lc ti p l1 v1 l2 v2 rs
   ==. updateLabelCheck lc (Table ti rs) p l1 v1 l2 v2 
   *** QED 
    | otherwise
@@ -120,34 +121,67 @@ labelUpdateCheckEq l lc p l1 v1 l2 v2 t@(Table ti@(TInfo lt _ lf1 _ _) rs)
     εv2 = if (canFlowTo l2 l) then (εTerm l v2) else THole
 
 
-
+-- rewrite into pred
+{-@ ple labelPredField2RowsEq @-}
 {-@ 
-lfRowsEq 
+labelPredField2RowsEq
   :: (Eq l, Label l)
   => l:l 
   -> p:Pred 
   -> ti:{TInfo l | canFlowTo (field1Label ti) l }
   -> rs:[Row l] 
-  -> { lfRows p ti rs == lfRows p ti (εRows l ti rs) }
+  -> { labelPredField2Rows p ti rs == labelPredField2Rows p ti (εRows l ti rs) }
   / [len rs] @-}
-lfRowsEq :: (Eq l, Label l) => l -> Pred -> TInfo l -> [Row l] -> Proof 
-lfRowsEq l p ti []
-  =   lfRows p ti (εRows l ti []) 
-  ==. bot 
-  ==. lfRows p ti [] 
-  *** QED 
+labelPredField2RowsEq :: (Eq l, Label l) => l -> Pred -> TInfo l -> [Row l] -> Proof 
+labelPredField2RowsEq l p ti []
+  =   labelPredField2Rows p ti []
+  ==. bot
+  ==. labelPredField2Rows p ti (εRows l ti [])
+  *** QED
 
-lfRowsEq l p ti (r@(Row k o1 o2):rs)
-  =   lfRows p ti (εRows l ti (r:rs))
-  ==. lfRows p ti (εRow l ti r:εRows l ti rs)
-  ==. lfRow p ti (εRow l ti r) `join` lfRows p ti (εRows l ti rs)
+labelPredField2RowsEq l p ti (r@(Row _ o1 _):rs)
+  =   labelPredField2Rows p ti (r:rs)
+  ==. labelPredField2Row p ti r `join` labelPredField2Rows p ti rs
+  ==. makeValLabel ti (rowField1 r) `join` labelPredField2Rows p ti rs
+  ==. makeValLabel ti (rowField1 (εRow l ti r)) `join` labelPredField2Rows p ti (εRows l ti rs)
+  ==. labelPredField2Row p ti (εRow l ti r) `join` labelPredField2Rows p ti (εRows l ti rs)
+  ==. labelPredField2Rows p ti (εRow l ti r : εRows l ti rs)
+  ==. labelPredField2Rows p ti (εRows l ti (r:rs))
       ? assert (canFlowTo (field1Label ti) l)
       ? assert (εTerm l o1 == o1)
       ? assert ((rowField1 r) == (rowField1 (εRow l ti r))) 
-      ? lfRowsEq l p ti rs  
-  ==. lfRow p ti r `join` lfRows p ti rs
-  ==. lfRows p ti (r:rs)
-  *** QED 
+      ? labelPredField2RowsEq  l p ti rs
+      ? assert (rowField1 r == rowField1 (εRow l ti r))
+  *** QED
+
+
+-- {-@ 
+-- lfRowsEq 
+--   :: (Eq l, Label l)
+--   => l:l 
+--   -> p:Pred 
+--   -> ti:{TInfo l | canFlowTo (field1Label ti) l }
+--   -> rs:[Row l] 
+--   -> { lfRows p ti rs == lfRows p ti (εRows l ti rs) }
+--   / [len rs] @-}
+-- lfRowsEq :: (Eq l, Label l) => l -> Pred -> TInfo l -> [Row l] -> Proof 
+-- lfRowsEq l p ti []
+--   =   lfRows p ti (εRows l ti []) 
+--   ==. bot 
+--   ==. lfRows p ti [] 
+--   *** QED 
+
+-- lfRowsEq l p ti (r@(Row k o1 o2):rs)
+--   =   lfRows p ti (εRows l ti (r:rs))
+--   ==. lfRows p ti (εRow l ti r:εRows l ti rs)
+--   ==. lfRow p ti (εRow l ti r) `join` lfRows p ti (εRows l ti rs)
+--       ? assert (canFlowTo (field1Label ti) l)
+--       ? assert (εTerm l o1 == o1)
+--       ? assert ((rowField1 r) == (rowField1 (εRow l ti r))) 
+--       ? lfRowsEq l p ti rs  
+--   ==. lfRow p ti r `join` lfRows p ti rs
+--   ==. lfRows p ti (r:rs)
+--   *** QED 
 
 
 
