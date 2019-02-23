@@ -8,7 +8,6 @@ main :: IO ()
 main = liquid [
     "EraseTableAny.hs"
   , "LabelUpdateCheck.hs"
-  , "LabelUpdateCheckNothingJust.hs"
   , "Simulations/UpdateAny.hs"
   , "Simulations/UpdateAnyNothingJust.hs"
   , "Simulations/UpdateRowBySMT.hs"

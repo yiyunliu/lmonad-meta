@@ -14,7 +14,6 @@ import LabelPredEraseEqual
 import LabelUpdateCheck
 import Simulations.Terms 
 import Simulations.UpdateNothingJust
-import LabelUpdateCheckNothingJust
 import Simulations.UpdateOneNothingJust
 
 import Prelude hiding (Maybe(..), fromJust, isJust)

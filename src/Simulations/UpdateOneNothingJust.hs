@@ -7,7 +7,6 @@ import Programs
 import Predicates 
 
 import Idempotence 
-import LabelUpdateCheckNothingJust
 import Simulations.Terms
 
 import Prelude hiding (Maybe(..), fromJust, isJust)
@@ -25,7 +24,7 @@ import Prelude hiding (Maybe(..), fromJust, isJust)
 
 simulationsUpdateOneNothingJust :: (Label l, Eq l) 
   => l -> l -> DB l -> TName -> Pred -> l -> Term l -> Table l -> Table l  -> Proof
-simulationsUpdateOneNothingJust l lc [] n p l2 v2 _ _
+simulationsUpdateOneNothingJust l _ [] n p _ v2 _ _
   =   εDB l [] 
   ==. εDB l (updateDBNothingJust [] n p v2) 
   *** QED 
@@ -53,10 +52,12 @@ simulationsUpdateOneNothingJust l lc ((Pair n' t@(Table ti rs)):ts) n p  l2 v2 t
       ? use (updateLabelCheckNothingJust lc t p l2 v2)
       ? use (updateRowsCheckNothingJust lc lφ ti p l2 v2 rs)
       ? use (not (updateLabelCheckNothingJust lc εt' p l2 εv2))
-      ? use (not (updateRowsCheckNothingJust lc (lfTable p εt') ti p l2 εv2 (εRows l ti rs)))
-      ? use (canFlowTo (lfRows p ti rs) lφ)
+      ? use (not (updateRowsCheckNothingJust lc (labelPred p εt') ti p l2 εv2 (εRows l ti rs)))
+      ? use (canFlowTo (labelPredField2Rows p ti rs) lφ)
+      ? use (joinCanFlowTo (field1Label ti) (labelPredField2Rows p ti rs) lφ)
       ? simulationsUpdateRowsNothingJust l lc lφ εlφ ti p l2 v2 rs      
-      ? use (canFlowTo (lfRows p ti (εRows l ti rs)) εlφ)
+      ? use (canFlowTo (labelPredField2Rows p ti (εRows l ti rs)) εlφ)
+      ? use (joinCanFlowTo (field1Label ti) (labelPredField2Rows p ti (εRows l ti rs)) lφ)
   ==. Pair n' (Table ti (εRows l ti rs)):εDB l ts 
   ==. Pair n' (εTable l (Table ti rs)):εDB l ts     
   ==. εDB l (Pair n' (Table ti rs):ts)
@@ -69,7 +70,7 @@ simulationsUpdateOneNothingJust l lc ((Pair n' t@(Table ti rs)):ts) n p  l2 v2 t
   ==. Pair n' (εTable l (Table ti rs)):εDB l ts 
   ==. εDB l (Pair n' (Table ti rs):ts)
   *** QED 
-  | n /= n' 
+  | otherwise
   =  (Just t' ==. 
       lookupTable n ((Pair n' (Table ti rs)):ts) ==. 
       Just t 
@@ -90,8 +91,13 @@ simulationsUpdateOneNothingJust l lc ((Pair n' t@(Table ti rs)):ts) n p  l2 v2 t
   
   where
     εv2 = if (canFlowTo l2 l) then v2 else THole
-    lφ  = lawFlowReflexivity (lfRows p ti rs) `cast` lfTable p (Table ti rs)
-    εlφ = lawFlowReflexivity (lfRows p ti (εRows l ti rs)) `cast` lfTable p (Table ti (εRows l ti rs))
+    -- todo might fail here
+    -- why the cast?
+    lφ  = labelPred p (Table ti rs)
+    εlφ = labelPred p (Table ti (εRows l ti rs))
+
+    -- lφ  = lawFlowReflexivity (labelPredField2Rows p ti rs) `cast` lfTable p (Table ti rs)
+    -- εlφ = lawFlowReflexivity (labelPredField2Rows p ti (εRows l ti rs)) `cast` lfTable p (Table ti (εRows l ti rs))
 
 
 
@@ -204,8 +210,10 @@ simulationsUpdateOneErasedNothingJust l lc ((Pair n' t@(Table ti rs)):ts) n p l2
       ? use (not (updateLabelCheckNothingJust lc t p l2 v2))
       ? use (not (updateRowsCheckNothingJust lc lφ ti p l2 v2 rs))
       ? use (updateLabelCheckNothingJust lc εt' p l2 εv2)
-      ? use (updateRowsCheckNothingJust lc (lfTable p εt') ti p l2 εv2 (εRows l ti rs))
-      ? use (canFlowTo (lfRows p ti (εRows l ti rs)) εlφ)
+      ? use (updateRowsCheckNothingJust lc (labelPred p εt') ti p l2 εv2 (εRows l ti rs))
+      ? use (canFlowTo (labelPredField2Rows p ti (εRows l ti rs)) εlφ)
+      ? use (canFlowTo (field1Label ti) εlφ)
+      ? use (joinCanFlowTo (field1Label ti) (labelPredField2Rows p ti (εRows l ti rs)) εlφ)
       ? simulationsUpdateRowsNothingJust l lc lφ εlφ ti p l2 εv2 (εRows l ti rs)
   ==. Pair n' (Table ti (εRows l ti (εRows l ti rs))):εDB l (εDB l ts)
       ? εRowsIdempotent l ti rs
@@ -238,8 +246,12 @@ simulationsUpdateOneErasedNothingJust l lc ((Pair n' t@(Table ti rs)):ts) n p l2
 
   where
     εv2 = if (canFlowTo l2 l) then v2 else THole
-    lφ  = lawFlowReflexivity (lfRows p ti rs) `cast` lfTable p (Table ti rs)
-    εlφ = lawFlowReflexivity (lfRows p ti (εRows l ti rs)) `cast` lfTable p (Table ti (εRows l ti rs))
+    -- todo here again, a cast
+    lφ  = labelPred p (Table ti rs)
+    εlφ = labelPred p (Table ti (εRows l ti rs))
+    
+    -- lφ  = lawFlowReflexivity (lfRows p ti rs) `cast` lfTable p (Table ti rs)
+    -- εlφ = lawFlowReflexivity (lfRows p ti (εRows l ti rs)) `cast` lfTable p (Table ti (εRows l ti rs))
 
 
 
