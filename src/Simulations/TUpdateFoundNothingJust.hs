@@ -11,10 +11,10 @@ import Idempotence
 import EraseTableAnyNothingJust
 import LookupTableErase 
 import LabelPredEraseEqual
-import LabelUpdateCheck
 import Simulations.Terms 
 import Simulations.UpdateNothingJust
 import Simulations.UpdateOneNothingJust
+import LabelUpdateCheckNothingJust
 
 import Prelude hiding (Maybe(..), fromJust, isJust)
 
