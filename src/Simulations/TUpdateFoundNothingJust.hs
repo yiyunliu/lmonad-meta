@@ -9,8 +9,8 @@ import Predicates
 
 import Idempotence 
 import EraseTableAnyNothingJust
-import LookupTableErase 
-import LabelPredEraseEqual
+-- import LookupTableErase 
+-- import LabelPredEraseEqual
 import Simulations.Terms 
 import Simulations.UpdateNothingJust
 import Simulations.UpdateOneNothingJust
@@ -42,7 +42,8 @@ simulationsUpdateFlowsFoundNothingJust l lc db n p l2 v2 t εt
                   (εTerm l (TUpdate n (TPred p)
                              TNothing
                              (TJust (TLabeled l2 v2)))))) 
-  ==. ε l (eval (Pg lc (εDB l db)
+  ==.
+    ε l (eval (Pg lc (εDB l db)
                   (TUpdate n (εTerm l (TPred p))
                    (εTerm l TNothing)
                    (εTerm l (TJust (TLabeled l2 v2))))))

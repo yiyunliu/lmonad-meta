@@ -85,7 +85,7 @@ labelUpdateCheckEqNothingJust
   -> p:Pred
   -> l2:l
   -> v2:SDBTerm l
-  -> t:{Table l | canFlowTo (tableLabel (tableInfo t)) l }
+  -> t:{Table l | canFlowTo (tableLabel (tableInfo t)) l && lc}
   -> { (canFlowTo (field1Label (tableInfo t))  l) 
   => updateLabelCheckNothingJust lc t p l2 v2 == updateLabelCheckNothingJust lc (εTable l t) p l2 (if (canFlowTo l2 l) then (εTerm l v2) else THole) }
 @-}

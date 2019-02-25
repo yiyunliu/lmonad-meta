@@ -16,8 +16,7 @@ import Prelude hiding (Maybe(..), fromJust, isJust)
  :: p : Pred
  -> r : Row l
  -> l : l
- -> ti : {TInfo l | (pDep2 p => canFlowTo (join (field1Label ti) (labelPredField2Row p ti r)) l)
-                   && (pDep1 p => canFlowTo (field1Label ti) l )}
+ -> ti : {TInfo l | canFlowTo (labelPredRow p ti r) l}
  -> { evalPred p r == evalPred p (εRow l ti r) }
  @-}
 simulationsEvalPred :: (Eq l, Label l) => Pred -> Row l -> l -> TInfo l -> Proof

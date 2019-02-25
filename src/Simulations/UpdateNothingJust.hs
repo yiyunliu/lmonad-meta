@@ -67,6 +67,7 @@ simulationsUpdateNothingJust l lc ((Pair n' t@(Table ti rs)):ts) n p l2 v2 t' ε
   ==.  Pair n' (Table ti (εRows l ti (updateRowsNothingJust p εv2 (εRows l ti rs)))):εDB l (εDB l ts)
       ? assert (updateLabelCheckNothingJust lc t p l2 v2)
       ? assert (updateLabelCheckNothingJust lc εt' p l2 εv2)
+      ? assert (labelPredField2Rows p ti rs `canFlowTo` labelPred p t)
       ? simulationsUpdateRowsNothingJust l lc lφ εlφ ti p l2 v2 rs
       ? assert (εRows l ti (updateRowsNothingJust p εv2 (εRows l ti rs)) == εRows l ti (updateRowsNothingJust p v2 rs))
       ? εDBIdempotent l ts
@@ -100,8 +101,10 @@ simulationsUpdateNothingJust l lc ((Pair n' t@(Table ti rs)):ts) n p l2 v2 t' ε
 
   where
     εv2 = if (canFlowTo l2 l) then v2 else THole
-    lφ  = lawFlowReflexivity (lfRows p ti rs) `cast` lfTable p (Table ti rs)
-    εlφ = lawFlowReflexivity (lfRows p ti (εRows l ti rs)) `cast` lfTable p (Table ti (εRows l ti rs))
+    lφ  = -- lawFlowReflexivity (labelPred p ti rs) `cast` 
+      labelPred p (Table ti rs)
+    εlφ = -- lawFlowReflexivity (labelPredField2Rows p ti (εRows l ti rs)) `cast` 
+      labelPred p (Table ti (εRows l ti rs))
 
 {-@ simulationsUpdateRowsNothingJust
   :: (Label l, Eq l)
@@ -111,7 +114,7 @@ simulationsUpdateNothingJust l lc ((Pair n' t@(Table ti rs)):ts) n p l2 v2 t' ε
   -> p:Pred
   -> l2:l 
   -> v2: SDBTerm l 
-  -> rs:{[Row l] | (canFlowTo (lfRows p ti rs) lf) && (canFlowTo (lfRows p ti (εRows l ti rs)) elf) && (updateRowsCheckNothingJust lc lf ti p l2 v2 rs) && (updateRowsCheckNothingJust lc elf ti p l2 (if (canFlowTo l2 l) then v2 else THole) (εRows l ti rs))} 
+  -> rs:{[Row l] | (canFlowTo (labelPredField2Rows p ti rs) lf) && (canFlowTo (labelPredField2Rows p ti (εRows l ti rs)) elf) && (updateRowsCheckNothingJust lc lf ti p l2 v2 rs) && (updateRowsCheckNothingJust lc elf ti p l2 (if (canFlowTo l2 l) then v2 else THole) (εRows l ti rs))} 
   -> { (εRows l ti (updateRowsNothingJust p (if (canFlowTo l2 l) then v2 else THole) (εRows l ti rs)) = εRows l ti (updateRowsNothingJust p v2 rs)) } 
    / [len rs] @-}
 simulationsUpdateRowsNothingJust
@@ -136,13 +139,13 @@ simulationsUpdateRowsNothingJust l lc lφ εlφ ti p l2 v2 (r:rs)
       ? assert (updateRowsCheckNothingJust lc lφ ti p l2 v2 (r:rs))
       ? assert (updateRowsCheckNothingJust lc lφ ti p l2 v2 rs)
       ? assert (updateRowCheckNothingJust lc lφ ti p l2 v2 r)
-      ? assert (lfRows p ti (r:rs) `canFlowTo` lφ)
-      ? assert ((lfRow p ti r `join` lfRows p ti rs) `canFlowTo` lφ)
-      ? joinCanFlowTo (lfRow p ti r) (lfRows p ti rs) lφ
-      ? assert (lfRows p ti (εRows l ti (r:rs)) `canFlowTo` εlφ)
-      ? assert (lfRows p ti (εRow l ti r:εRows l ti rs) `canFlowTo` εlφ)
-      ? assert ((lfRow p ti (εRow l ti r) `join` lfRows p ti (εRows l ti rs)) `canFlowTo` εlφ)
-      ? joinCanFlowTo (lfRow p ti (εRow l ti r)) (lfRows p ti (εRows l ti rs)) εlφ
+      ? assert (labelPredField2Rows p ti (r:rs) `canFlowTo` lφ)
+      ? assert ((labelPredField2Row p ti r `join` labelPredField2Rows p ti rs) `canFlowTo` lφ)
+      ? joinCanFlowTo (labelPredField2Row p ti r) (labelPredField2Rows p ti rs) lφ
+      ? assert (labelPredField2Rows p ti (εRows l ti (r:rs)) `canFlowTo` εlφ)
+      ? assert (labelPredField2Rows p ti (εRow l ti r:εRows l ti rs) `canFlowTo` εlφ)
+      ? assert ((labelPredField2Row p ti (εRow l ti r) `join` labelPredField2Rows p ti (εRows l ti rs)) `canFlowTo` εlφ)
+      ? joinCanFlowTo (labelPredField2Row p ti (εRow l ti r)) (labelPredField2Rows p ti (εRows l ti rs)) εlφ
       ? assert (updateRowCheckNothingJust lc lφ ti p l2 v2 r)
       ? simulationsUpdateRowsNothingJust l lc lφ εlφ ti p l2 v2 rs
       ? simulationsUpdateRowNothingJust  l lc lφ εlφ ti p l2 v2 r
@@ -161,7 +164,7 @@ simulationsUpdateRowsNothingJust l lc lφ εlφ ti p l2 v2 (r:rs)
   -> p:Pred
   -> l2:l 
   -> v2: SDBTerm l 
-  -> r: {Row l | (canFlowTo (lfRow p ti r) lf) && (canFlowTo (lfRow p ti (εRow l ti r)) elf) && (updateRowCheckNothingJust lc lf ti p l2 v2 r) && (updateRowCheckNothingJust lc elf ti p l2 (if (canFlowTo l2 l) then v2 else THole) (εRow l ti r)) } 
+  -> r: {Row l | (canFlowTo (labelPredField2Row p ti r) lf) && (canFlowTo (labelPredField2Row p ti (εRow l ti r)) elf) && (updateRowCheckNothingJust lc lf ti p l2 v2 r) && (updateRowCheckNothingJust lc elf ti p l2 (if (canFlowTo l2 l) then v2 else THole) (εRow l ti r)) } 
   -> { εRow l ti (updateRowNothingJust p (if (canFlowTo l2 l) then v2 else THole) (εRow l ti r)) = εRow l ti (updateRowNothingJust p v2 r) } @-}
 simulationsUpdateRowNothingJust
   :: (Label l, Eq l)
@@ -178,8 +181,8 @@ simulationsUpdateRowNothingJust l lc lφ εlφ ti p l2 v2 r@(Row k o1 o2)
       v1 = o1
       εv1 =if (canFlowTo l1 l) then v1 else THole
       εo2 = if makeValLabel ti o1 `canFlowTo` l then (εTerm l v2) else THole
-      lφR  = lfRow p ti r  
-      lφER = lfRow p ti (εRow l ti r)
+      lφR  = labelPredField2Row p ti r  
+      lφER = labelPredField2Row p ti (εRow l ti r)
       globals =  
           assert (updateRowCheckNothingJust  lc εlφ ti p l2 εv2 (εRow l ti r))
         ? use (updateRowLabel2 lc εlφ ti p l1 εv1 l2 εv2 (εRow l ti r))

@@ -365,6 +365,20 @@ labelPred p (Table ti rs)
   | otherwise 
   = bot 
 
+-- helper function
+{-@ reflect labelPredRow @-}
+labelPredRow :: (Eq l, Label l) => Pred -> TInfo l -> Row l -> l
+labelPredRow p ti r
+  | pDep2 p
+  = field1Label ti `join` labelPredField2Row p ti r
+  | pDep1 p
+  = field1Label ti
+  | otherwise
+  = bot
+
+
+
+
 {-@ reflect labelPredField2Rows @-}
 labelPredField2Rows :: (Eq l, Label l) => Pred -> TInfo l -> [Row l] -> l
 labelPredField2Rows p ti []     = bot
@@ -541,14 +555,14 @@ eval (Pg lc db (TUpdate n (TPred p) TNothing (TJust (TLabeled l2 v2))))
   | Just t <- lookupTable n db
   , updateLabelCheckNothingJust lc t p l2 v2
   -- no need for label check since label info does not change
-  = let lc' = lc `join` labelRead p t
+  = let lc' = lc `join` labelPred p t
                          `join` tableLabel (tableInfo t)
     in Pg lc' (updateDBNothingJust db n p v2) (TReturn TUnit)
 
 eval (Pg lc db (TUpdate n (TPred p) TNothing (TJust (TLabeled l2 v2))))
   | Just t <- lookupTable n db
   -- no need for label check since label info does not change
-  = let lc' = lc `join` labelRead p t
+  = let lc' = lc `join` labelPred p t
                          `join` tableLabel (tableInfo t)
     in Pg lc' db (TReturn TException)
     
