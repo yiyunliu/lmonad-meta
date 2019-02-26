@@ -273,6 +273,7 @@ updateRowsCheckNothingJust :: (Label l, Eq l) => l -> l -> TInfo l -> Pred -> l 
 -- todo: restructure it so v1 is examined in updateRowCheckNothingJust
 updateRowsCheckNothingJust _ _ _ _ _ _ []            = True 
 updateRowsCheckNothingJust lc lφ ti p l2 v2 (r:rs) =
+  updateRowCheckNothingJust lc lφ ti p l2 v2 r &&
   updateRowsCheckNothingJust lc lφ ti p l2 v2 rs
 
 {-@ reflect updateLabelCheckJN @-}
@@ -313,8 +314,8 @@ updateRowsCheck lc lφ ti p l1 v1 l2 v2 (r:rs) = updateRowCheck lc lφ ti p l1 v
 {-@ reflect updateRowCheck @-}
 updateRowCheck :: (Label l, Eq l) => l -> l -> TInfo l -> Pred -> l -> Term l -> l -> Term l -> Row l -> Bool 
 updateRowCheck lc lφ ti p l1 v1 l2 v2 r 
-  = if evalPred r then  (updateRowLabel1 lc lφ ti p l1 v1 l2 v2 r)
-   && (updateRowLabel2 lc lφ ti p l1 v1 l2 v2 r) else True
+  =  (updateRowLabel1 lc lφ ti p l1 v1 l2 v2 r)
+   && (updateRowLabel2 lc lφ ti p l1 v1 l2 v2 r)
 {-@ reflect updateRowCheckNothingJust @-}
 updateRowCheckNothingJust :: (Label l, Eq l) => l -> l -> TInfo l -> Pred -> l -> Term l -> Row l -> Bool 
 updateRowCheckNothingJust lc lφ ti p l2 v2 r@(Row _ v1 _)
@@ -505,14 +506,14 @@ eval (Pg lc db (TUpdate n (TPred p) TNothing (TJust (TLabeled l2 v2))))
   -- no need for label check since label info does not change
   = let lc' = lc `join` (field1Label (tableInfo t)
                         -- 
-                         `join` labelReadTable p (tableInfo t))
+                         `join` labelPredTable p t)
     in Pg lc' (updateDBNothingJust db n p v2) (TReturn TUnit)
 
 eval (Pg lc db (TUpdate n (TPred p) TNothing (TJust (TLabeled l2 v2))))
   | Just t <- lookupTable n db
   -- no need for label check since label info does not change
   = let lc' = lc `join` (field1Label (tableInfo t)
-                         `join` tableLabel (tableInfo t))
+                         `join` labelPredTable p t)
     in Pg lc' db (TReturn TException)
     
 eval (Pg lc db (TUpdate n (TPred p) TNothing (TJust (TLabeled _ _))))   
