@@ -7,7 +7,8 @@ import Labels
 import Programs 
 import Predicates 
 
-import Idempotence 
+import Idempotence
+import LabelPredImplies
 import EraseTableAnyNothingJust
 import LookupTableErase 
 import LabelPredEraseEqual
@@ -65,7 +66,9 @@ simulationsUpdateFlowsFoundNothingJust l lc db n p l2 v2 t εt
       
   ==. (if field1Label ti `canFlowTo` l 
          then Pg εlc' (εDB l (updateDBNothingJust (εDB l db) n p εv2)) (εTerm l (TReturn TUnit))
-              ? assert (εlc' == lc')
+              ? globals
+              -- does not hold
+              -- ? assert (εlc' == lc')
          else PgHole  (εDB l (updateDBNothingJust (εDB l db) n p εv2))
       )
       ? globals 
@@ -211,18 +214,113 @@ simulationsUpdateFlowsFoundNothingJust l lc db n p l2 v2 t εt
     a  = updateLabelCheckNothingJust lc t  p l2 v2
     εa = updateLabelCheckNothingJust lc εt p l2 εv2
 
-    lc'  = lc `join` (field1Label ti `join` tableLabel (tableInfo t))
-    εlc' = lc `join` (field1Label ti `join` tableLabel (tableInfo t))
+    lc'  = lc `join` (field1Label ti `join` labelPredTable p t)
+    εlc' = lc `join` (field1Label ti `join` labelPredTable p εt)
 
     εv2  = if l2 `canFlowTo` l then (εTerm l v2) else THole
 
-    globals = assert (Just t  == lookupTable n db) 
+    globals = assert (Just t  == lookupTable n db)
+              ? joinCanFlowTo (tableLabel ti) (field1Label ti) l
               ? assert (Just εt == lookupTable n (εDB l db)) 
               ? pTable n l db t 
               ? assert (Just (εTable l t) == lookupTable n (εDB l db))
-              ? joinCanFlowTo lc (field1Label ti `join` tableLabel (tableInfo t)) l
-              ? joinCanFlowTo (field1Label ti) (tableLabel (tableInfo t)) l
+              ? labelPredTableEq l p t
+              ? labelPredTableImplies l p t
+              ? joinCanFlowTo lc (field1Label ti `join` labelPredTable p t) l
+              ? joinCanFlowTo (field1Label ti) (labelPredTable p t) l
 
+{-@ labelPredTableEq
+  :: (Eq l, Label l)
+  => l:l
+  -> p:Pred
+  -> t:Table l
+  -> { canFlowTo (tableLabel (tableInfo t)) l =>
+       labelPredTable p t = labelPredTable p (εTable l t) }
+@-}
+
+labelPredTableEq :: (Eq l, Label l) => l -> Pred -> Table l -> Proof
+labelPredTableEq l p t@(Table ti rs)
+  | canFlowTo (tableLabel (tableInfo t)) l
+  =   labelPredTable p t
+  ==! labelPredRows p ti rs
+      ? assert (canFlowTo (field1Label ti) (tableLabel ti))
+      ? lawFlowTransitivity (field1Label ti) (tableLabel ti) l
+      ? labelPredRowsEq l p ti rs
+
+  ==! labelPredRows p ti (εRows l ti rs)
+  ==! labelPredTable p (Table ti (εRows l ti rs))
+  ==! labelPredTable p (εTable l t)
+  *** QED
+  | otherwise = ()
+  
+
+  
+
+{-@ labelPredRowsEq
+  :: (Eq l, Label l)
+  => l:l
+  -> p:Pred
+  -> ti:{TInfo l | canFlowTo (field1Label ti) l}
+  -> rs:[Row l]
+  -> {labelPredRows p ti rs == labelPredRows p ti (εRows l ti rs)}
+@-}
+labelPredRowsEq :: (Eq l, Label l) => l -> Pred -> TInfo l -> [Row l] -> Proof
+labelPredRowsEq l p ti rs
+  | not (pDep1 p)
+  = labelPredRows p ti rs ==. tableLabel ti ==. labelPredRows p ti (εRows l ti rs) *** QED
+
+labelPredRowsEq l p ti []
+  =   labelPredRows p ti []
+  ==. labelPredRows p ti (εRows l ti [])
+  *** QED
+labelPredRowsEq l p ti (r:rs)
+  =   labelPredRows p ti (r:rs)
+  ==. (tableLabel ti `join` labelPredRow p ti r) `join` labelPredRows p ti rs
+      ? labelPredRowsEq l p ti rs
+      ? labelPredRowEq l p ti r
+  ==. (tableLabel ti `join` labelPredRow p ti (εRow l ti r)) `join` labelPredRows p ti (εRows l ti rs)
+  ==. labelPredRows p ti (εRow l ti r : εRows l ti rs)
+  ==. labelPredRows p ti (εRows l ti (r:rs))
+  *** QED
+
+{-@ labelPredRowEq
+  :: (Eq l, Label l)
+  => l:l
+  -> p:Pred
+  -> ti:{TInfo l | canFlowTo (field1Label ti) l}
+  -> r:Row l
+  -> {labelPredRow p ti r == labelPredRow p ti (εRow l ti r)}
+@-}
+labelPredRowEq :: (Eq l, Label l) => l -> Pred -> TInfo l -> Row l -> Proof
+labelPredRowEq l p ti r@(Row k o1 o2) 
+  | pDep2 p
+  =   labelPredRow p ti r
+  ==. field1Label ti `join` makeValLabel ti (rowField1 r)
+    ? globals
+  ==. field1Label ti `join` makeValLabel ti (rowField1 εr)
+  ==. labelPredRow p ti εr
+  *** QED
+  | otherwise
+  =   labelPredRow p ti r ==. field1Label ti ==. labelPredRow p ti εr *** QED
+  where  εr = εRow l ti r
+         globals =   assert (canFlowTo (field1Label ti) l)
+                   &&& (rowField1 εr
+                    ==. εTerm l o1
+                    ==. rowField1 r *** QED)
+
+
+
+-- {-@ labelPredTableEq ::
+--  (Label l, Eq l) =>
+--   l:l ->
+--   p:Pred ->
+--   t:Table l ->
+--   {(not (pDep2 p) => labelPredTable p t == labelPredTable p (εTable l t) )} @-}
+-- labelPredTableEq :: (Eq l, Label l) => l -> Pred -> Table l -> Proof
+-- labelPredTableEq l p t = 
+
+
+    
 
 {-@ getInv :: ti:TInfo l -> {canFlowTo (field1Label ti) (tableLabel ti)} @-} 
 getInv :: TInfo l -> Proof 

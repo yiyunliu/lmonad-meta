@@ -23,7 +23,7 @@ runAllLiquid files = mconcat <$> mapM runLiquid (definitions ++ files)
 
 runLiquid :: String -> IO ExitCode
 runLiquid fname 
-  = runCommand' ("cd src && stack exec -- liquid " ++ fname)
+  = runCommand' ("cd src && stack exec -- liquid " ++ fname ++ " --cores=8")
 
 runCommand' :: String -> IO ExitCode
 runCommand' str = 
