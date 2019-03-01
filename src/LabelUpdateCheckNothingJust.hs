@@ -19,7 +19,7 @@ updateRowsCheckEqNothingJust
   -> p:Pred
   -> l2:l
   -> v2:SDBTerm l
-  -> rs: {[Row l] | updateRowsCheckNothingJust lc lf ti p l2 v2 rs || updateRowsCheckNothingJust lc lf ti p l2 (if (canFlowTo l2 l) then (εTerm l v2) else THole) (εRows l ti rs)} 
+  -> rs: {[Row l] | (updateRowsCheckNothingJust lc lf ti p l2 v2 rs || updateRowsCheckNothingJust lc lf ti p l2 (if (canFlowTo l2 l) then (εTerm l v2) else THole) (εRows l ti rs))} 
   -> {(updateRowsCheckNothingJust lc lf ti p l2 v2 rs ==
         updateRowsCheckNothingJust lc lf ti p l2 (if (canFlowTo l2 l) then (εTerm l v2) else THole) (εRows l ti rs)) }
   / [len rs] @-}
@@ -109,12 +109,12 @@ labelUpdateCheckEqNothingJust
   -> v2:SDBTerm l
   -> t:{Table l | canFlowTo (tableLabel (tableInfo t)) l &&
         (updateLabelCheckNothingJust lc t p l2 v2 || updateLabelCheckNothingJust lc (εTable l t) p l2 (if (canFlowTo l2 l) then (εTerm l v2) else THole))}
-  -> { (canFlowTo (field1Label (tableInfo t))  l) 
+  -> { (canFlowTo (labelPredTable p t)  l) 
   => updateLabelCheckNothingJust lc t p l2 v2 == updateLabelCheckNothingJust lc (εTable l t) p l2 (if (canFlowTo l2 l) then (εTerm l v2) else THole) }
 @-}
 labelUpdateCheckEqNothingJust :: (Eq l, Label l) => l -> l -> Pred -> l -> Term l -> Table l -> Proof 
 labelUpdateCheckEqNothingJust l lc p l2 v2 t@(Table ti@(TInfo lt _ lf1 _ _) rs)
-   | canFlowTo (tableLabel ti) l && canFlowTo (field1Label (tableInfo t)) l
+   | canFlowTo (labelPredTable p t) l
   =   updateLabelCheckNothingJust lc (εTable l (Table ti rs)) p l2 εv2
   ==. updateLabelCheckNothingJust lc (Table ti (εRows l ti rs)) p l2 εv2
   ==. updateRowsCheckNothingJust lc (lfTable p (Table ti (εRows l ti rs))) ti p l2 εv2 (εRows l ti rs)
