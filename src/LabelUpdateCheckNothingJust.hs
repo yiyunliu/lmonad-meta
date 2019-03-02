@@ -109,7 +109,7 @@ labelUpdateCheckEqNothingJust
   -> v2:SDBTerm l
   -> t:{Table l | canFlowTo (tableLabel (tableInfo t)) l &&
         (updateLabelCheckNothingJust lc t p l2 v2 || updateLabelCheckNothingJust lc (εTable l t) p l2 (if (canFlowTo l2 l) then (εTerm l v2) else THole))}
-  -> { (canFlowTo (labelPredTable p t)  l) 
+  -> { (canFlowTo (lfTable p t)  l) 
   => updateLabelCheckNothingJust lc t p l2 v2 == updateLabelCheckNothingJust lc (εTable l t) p l2 (if (canFlowTo l2 l) then (εTerm l v2) else THole) }
 @-}
 labelUpdateCheckEqNothingJust :: (Eq l, Label l) => l -> l -> Pred -> l -> Term l -> Table l -> Proof 

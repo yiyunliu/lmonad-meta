@@ -215,30 +215,31 @@ simulationsUpdateRowNJF1Flow l ti p l2 v2 r@(Row k o1 o2)
 
 
 -- they are actually equal. I only prove one direction for simplicity
-{-@ predFlowLfTable ::
-(Eq l, Label l)
-=> p:Pred
--> t:Table l
--> {canFlowTo (labelPredTable p t) (tableLabel (tableInfo t)) ||
-    canFlowTo (labelPredTable p t) }
-@-}
-predFlowLfTable :: (Eq l, Label l) => Pred -> Table l -> Proof
-predFlowLfTable p t@(Table ti rs)
-  =  predFlowLfRows p ti rs
+-- nvm i don't need this
+-- {-@ predFlowLfTable ::
+-- (Eq l, Label l)
+-- => p:Pred
+-- -> t:Table l
+-- -> {canFlowTo (labelPredTable p t) (tableLabel (tableInfo t)) ||
+--     canFlowTo (labelPredTable p t) }
+-- @-}
+-- predFlowLfTable :: (Eq l, Label l) => Pred -> Table l -> Proof
+-- predFlowLfTable p t@(Table ti rs)
+--   =  predFlowLfRows p ti rs
 
 
-{-@ predFlowLfRows ::
-(Eq l, Label l)
-=> p:Pred
--> ti:TInfo l
--> rs:[Row l]
--> {canFlowTo (labelPredRows p ti rs) (tableLabel ti `join` lfRows p ti rs) }
-@-}
-predFlowLfRows :: (Eq l, Label l) => Pred -> TInfo l -> [Row l] -> Proof
-predFlowLfRows p ti rs
-  | not (pDep1 p)
-  =   canFlowTo (labelPredRows p ti rs) (tableLabel ti `join` lfRows p ti rs)
-  ==. canFlowTo (tableLabel ti) (tableLabel ti `join` lfRows p ti rs)
-  *** QED
+-- {-@ predFlowLfRows ::
+-- (Eq l, Label l)
+-- => p:Pred
+-- -> ti:TInfo l
+-- -> rs:[Row l]
+-- -> {canFlowTo (labelPredRows p ti rs) (tableLabel ti lfRows p ti rs) }
+-- @-}
+-- predFlowLfRows :: (Eq l, Label l) => Pred -> TInfo l -> [Row l] -> Proof
+-- predFlowLfRows p ti rs
+--   | not (pDep1 p)
+--   =   canFlowTo (labelPredRows p ti rs) (tableLabel ti `join` lfRows p ti rs)
+--   ==. canFlowTo (tableLabel ti) (tableLabel ti `join` lfRows p ti rs)
+--   *** QED
 
 
