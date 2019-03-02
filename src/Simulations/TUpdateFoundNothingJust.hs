@@ -37,230 +37,220 @@ simulationsUpdateFlowsFoundNothingJust :: (Label l, Eq l)
   => l -> l -> DB l -> TName -> Pred -> l -> Term l -> Table l -> Table l -> Proof
 
 simulationsUpdateFlowsFoundNothingJust l lc db n p l2 v2 t εt
-  | a && εa  && (tableLabel ti `canFlowTo` l )
-  =   ε l (eval (ε l (Pg lc db (TUpdate n (TPred p)
-                                  TNothing
-                                  (TJust (TLabeled l2 v2))))))
-  ==. ε l (eval (Pg lc (εDB l db)
-                  (εTerm l (TUpdate n (TPred p)
-                             TNothing
-                             (TJust (TLabeled l2 v2)))))) 
-  ==. ε l (eval (Pg lc (εDB l db)
-                  (TUpdate n (εTerm l (TPred p))
-                   (εTerm l TNothing)
-                   (εTerm l (TJust (TLabeled l2 v2))))))
-  ==. ε l (eval (Pg lc (εDB l db)
-                  (TUpdate n (εTerm l (TPred p))
-                   TNothing
-                   (TJust (εTerm l  (TLabeled l2 v2))))))
-  ==. ε l (eval (Pg lc (εDB l db) (TUpdate n (TPred p)
-                                     TNothing
-                                     (TJust (TLabeled l2 εv2)))))
-  ==. ε l (Pg εlc' (updateDBNothingJust (εDB l db) n p εv2) (TReturn TUnit))
-      ? globals
-  ==. (if εlc' `canFlowTo` l 
-         then Pg εlc' (εDB l (updateDBNothingJust (εDB l db) n p εv2)) (εTerm l (TReturn TUnit))
-         else PgHole  (εDB l (updateDBNothingJust (εDB l db) n p εv2))
-      )
+ --  | a && εa  && (tableLabel ti `canFlowTo` l )
+ --  =   ε l (eval (ε l (Pg lc db (TUpdate n (TPred p)
+ --                                  TNothing
+ --                                  (TJust (TLabeled l2 v2))))))
+ --  ==. ε l (eval (Pg lc (εDB l db)
+ --                  (εTerm l (TUpdate n (TPred p)
+ --                             TNothing
+ --                             (TJust (TLabeled l2 v2)))))) 
+ --  ==. ε l (eval (Pg lc (εDB l db)
+ --                  (TUpdate n (εTerm l (TPred p))
+ --                   (εTerm l TNothing)
+ --                   (εTerm l (TJust (TLabeled l2 v2))))))
+ --  ==. ε l (eval (Pg lc (εDB l db)
+ --                  (TUpdate n (εTerm l (TPred p))
+ --                   TNothing
+ --                   (TJust (εTerm l  (TLabeled l2 v2))))))
+ --  ==. ε l (eval (Pg lc (εDB l db) (TUpdate n (TPred p)
+ --                                     TNothing
+ --                                     (TJust (TLabeled l2 εv2)))))
+ --  ==. ε l (Pg εlc' (updateDBNothingJust (εDB l db) n p εv2) (TReturn TUnit))
+ --      ? globals
+ --  ==. (if εlc' `canFlowTo` l 
+ --         then Pg εlc' (εDB l (updateDBNothingJust (εDB l db) n p εv2)) (εTerm l (TReturn TUnit))
+ --         else PgHole  (εDB l (updateDBNothingJust (εDB l db) n p εv2))
+ --      )
 
- -- stuck here (top to bottom)
+ -- -- stuck here (top to bottom)
       
-  ==. (if tableLabel ti `canFlowTo` l 
-         then Pg εlc' (εDB l (updateDBNothingJust (εDB l db) n p εv2)) (εTerm l (TReturn TUnit))
-              ? globals
-              -- does not hold
-              ? assert (εlc' == lc')
-         else PgHole  (εDB l (updateDBNothingJust (εDB l db) n p εv2))
-      )
-      ? globals 
-      ? assert (updateLabelCheckNothingJust lc t p l2 v2)
-      ? simulationsUpdateNothingJust l lc db n p l2 v2 t εt 
-      ? assert (εDB l (updateDBNothingJust (εDB l db) n p εv2) == εDB l (updateDBNothingJust db n p v2)) 
-  ==. (if field1Label ti `canFlowTo` l  
-        then Pg lc' (εDB l (updateDBNothingJust db n p v2)) (εTerm l (TReturn TUnit))
-        else PgHole (εDB l (updateDBNothingJust db n p v2)))
-      ? globals
-  ==. (if lc' `canFlowTo` l  
-        then Pg lc' (εDB l (updateDBNothingJust db n p v2)) (εTerm l (TReturn TUnit))
-        else PgHole (εDB l (updateDBNothingJust db n p v2)))
+ --  ==. (if tableLabel ti `canFlowTo` l 
+ --         then Pg εlc' (εDB l (updateDBNothingJust (εDB l db) n p εv2)) (εTerm l (TReturn TUnit))
+ --              ? globals
+ --              -- does not hold
+ --              ? assert (εlc' == lc')
+ --         else PgHole  (εDB l (updateDBNothingJust (εDB l db) n p εv2))
+ --      )
+ --      ? globals 
+ --      ? assert (updateLabelCheckNothingJust lc t p l2 v2)
+ --      ? simulationsUpdateNothingJust l lc db n p l2 v2 t εt 
+ --      ? assert (εDB l (updateDBNothingJust (εDB l db) n p εv2) == εDB l (updateDBNothingJust db n p v2)) 
+ --  ==. (if field1Label ti `canFlowTo` l  
+ --        then Pg lc' (εDB l (updateDBNothingJust db n p v2)) (εTerm l (TReturn TUnit))
+ --        else PgHole (εDB l (updateDBNothingJust db n p v2)))
+ --      ? globals
+ --  ==. (if lc' `canFlowTo` l  
+ --        then Pg lc' (εDB l (updateDBNothingJust db n p v2)) (εTerm l (TReturn TUnit))
+ --        else PgHole (εDB l (updateDBNothingJust db n p v2)))
 
 
-  -- stuck here (bottom to top)
+ --  -- stuck here (bottom to top)
     
-  ==. ε l (Pg lc' (updateDBNothingJust db n p v2) (TReturn TUnit))
-  ==. ε l (eval (Pg lc db (TUpdate n (TPred p) TNothing (TJust (TLabeled l2 v2)))))
-  *** QED
-  -- table does not flow
-  | a && εa
-  =   ε l (eval (ε l (Pg lc db (TUpdate n (TPred p)
-                                  TNothing
-                                  (TJust (TLabeled l2 v2))))))
-  ==. ε l (eval (Pg lc (εDB l db)
-                  (εTerm l (TUpdate n (TPred p)
-                             TNothing
-                             (TJust (TLabeled l2 v2)))))) 
-  ==. ε l (eval (Pg lc (εDB l db)
-                  (TUpdate n (εTerm l (TPred p))
-                   (εTerm l TNothing)
-                   (εTerm l (TJust (TLabeled l2 v2))))))
-  ==. ε l (eval (Pg lc (εDB l db)
-                  (TUpdate n (εTerm l (TPred p))
-                   TNothing
-                   (TJust (εTerm l  (TLabeled l2 v2))))))
-  ==. ε l (eval (Pg lc (εDB l db) (TUpdate n (TPred p)
-                                     TNothing
-                                     (TJust (TLabeled l2 εv2)))))
-  ==. ε l (Pg εlc' (updateDBNothingJust (εDB l db) n p εv2) (TReturn TUnit))
-  -- ==. (if εlc' `canFlowTo` l 
-  --        then Pg εlc' (εDB l (updateDBNothingJust (εDB l db) n p εv2)) (εTerm l (TReturn TUnit))
-  --        else PgHole  (εDB l (updateDBNothingJust (εDB l db) n p εv2))
-  --     )
-      ? globals
-      ? assert (tableLabel ti `canFlowTo` labelPredTable p t)
-      ? lawFlowTransitivity (tableLabel ti) εlc' l
-      ? assert (not (εlc' `canFlowTo` l))
- -- stuck here (top to bottom)
+ --  ==. ε l (Pg lc' (updateDBNothingJust db n p v2) (TReturn TUnit))
+ --  ==. ε l (eval (Pg lc db (TUpdate n (TPred p) TNothing (TJust (TLabeled l2 v2)))))
+ --  *** QED
+ --  -- table does not flow
+ --  | a && εa
+ --  =   ε l (eval (ε l (Pg lc db (TUpdate n (TPred p)
+ --                                  TNothing
+ --                                  (TJust (TLabeled l2 v2))))))
+ --  ==. ε l (eval (Pg lc (εDB l db)
+ --                  (εTerm l (TUpdate n (TPred p)
+ --                             TNothing
+ --                             (TJust (TLabeled l2 v2)))))) 
+ --  ==. ε l (eval (Pg lc (εDB l db)
+ --                  (TUpdate n (εTerm l (TPred p))
+ --                   (εTerm l TNothing)
+ --                   (εTerm l (TJust (TLabeled l2 v2))))))
+ --  ==. ε l (eval (Pg lc (εDB l db)
+ --                  (TUpdate n (εTerm l (TPred p))
+ --                   TNothing
+ --                   (TJust (εTerm l  (TLabeled l2 v2))))))
+ --  ==. ε l (eval (Pg lc (εDB l db) (TUpdate n (TPred p)
+ --                                     TNothing
+ --                                     (TJust (TLabeled l2 εv2)))))
+ --  ==. ε l (Pg εlc' (updateDBNothingJust (εDB l db) n p εv2) (TReturn TUnit))
+ --  -- ==. (if εlc' `canFlowTo` l 
+ --  --        then Pg εlc' (εDB l (updateDBNothingJust (εDB l db) n p εv2)) (εTerm l (TReturn TUnit))
+ --  --        else PgHole  (εDB l (updateDBNothingJust (εDB l db) n p εv2))
+ --  --     )
+ --      ? globals
+ --      ? assert (tableLabel ti `canFlowTo` labelPredTable p t)
+ --      ? lawFlowTransitivity (tableLabel ti) εlc' l
+ --      ? assert (not (εlc' `canFlowTo` l))
+ -- -- stuck here (top to bottom)
 
-      ? globals 
-      ? assert (updateLabelCheckNothingJust lc t p l2 v2)
-      ? simulationsUpdateNothingJust l lc db n p l2 v2 t εt 
-      ? assert (εDB l (updateDBNothingJust (εDB l db) n p εv2) == εDB l (updateDBNothingJust db n p v2)) 
-  ==. (if field1Label ti `canFlowTo` l  
-        then Pg lc' (εDB l (updateDBNothingJust db n p v2)) (εTerm l (TReturn TUnit))
-        else PgHole (εDB l (updateDBNothingJust db n p v2)))
-      ? globals
-  ==. (if lc' `canFlowTo` l  
-        then Pg lc' (εDB l (updateDBNothingJust db n p v2)) (εTerm l (TReturn TUnit))
-        else PgHole (εDB l (updateDBNothingJust db n p v2)))
+ --      ? globals 
+ --      ? assert (updateLabelCheckNothingJust lc t p l2 v2)
+ --      ? simulationsUpdateNothingJust l lc db n p l2 v2 t εt 
+ --      ? assert (εDB l (updateDBNothingJust (εDB l db) n p εv2) == εDB l (updateDBNothingJust db n p v2)) 
+ --  ==. (if field1Label ti `canFlowTo` l  
+ --        then Pg lc' (εDB l (updateDBNothingJust db n p v2)) (εTerm l (TReturn TUnit))
+ --        else PgHole (εDB l (updateDBNothingJust db n p v2)))
+ --      ? globals
+ --  ==. (if lc' `canFlowTo` l  
+ --        then Pg lc' (εDB l (updateDBNothingJust db n p v2)) (εTerm l (TReturn TUnit))
+ --        else PgHole (εDB l (updateDBNothingJust db n p v2)))
 
 
-  -- stuck here (bottom to top)
+ --  -- stuck here (bottom to top)
     
-  ==. ε l (Pg lc' (updateDBNothingJust db n p v2) (TReturn TUnit))
-  ==. ε l (eval (Pg lc db (TUpdate n (TPred p) TNothing (TJust (TLabeled l2 v2)))))
+ --  ==. ε l (Pg lc' (updateDBNothingJust db n p v2) (TReturn TUnit))
+ --  ==. ε l (eval (Pg lc db (TUpdate n (TPred p) TNothing (TJust (TLabeled l2 v2)))))
+ --  *** QED
+
+  
+ --  | not (canFlowTo (tableLabel ti) l)
+ --  -- TUpdateFound.C2: 
+ --  {- The erased always succeds 
+ --     The non erased can succed or fail depending on whether the table is empty or not
+ --  -}
+ --  =   ε l (eval (ε l (Pg lc db (TUpdate n (TPred p) TNothing (TJust (TLabeled l2 v2)))))) 
+ --  ==. ε l (eval (Pg lc (εDB l db) (εTerm l (TUpdate n (TPred p) TNothing (TJust (TLabeled l2 v2))))))
+ --  ==. ε l (eval (Pg lc (εDB l db) (TUpdate n (εTerm l (TPred p)) (εTerm l TNothing) (εTerm l (TJust (TLabeled l2 v2))))))
+ --  ==. ε l (eval (Pg lc (εDB l db) (TUpdate n (εTerm l (TPred p)) TNothing (TJust ((εTerm l (TLabeled l2 v2)))))))
+ --  ==. ε l (eval (Pg lc (εDB l db) (TUpdate n (TPred p) TNothing (TJust (TLabeled l2 εv2))))) 
+ --  ==. ε l (if εa 
+ --            then Pg εlc' (updateDBNothingJust (εDB l db) n p εv2) (TReturn TUnit)
+ --            else Pg εlc' (εDB l db) (TReturn TException))
+ --      ? globals
+ --      ? use (not (εlc' `canFlowTo` l))
+ --  ==. (if εa 
+ --         then PgHole (εDB l (updateDBNothingJust (εDB l db) n p εv2)) 
+ --         else PgHole (εDB l (εDB l db)))
+ --      ? εTableAnyNothingJust l n (εDB l db) p εv2
+ --  ==. PgHole (εDB l (εDB l db))
+ --       ? εDBIdempotent l db 
+ --  ==. PgHole (εDB l db)
+ --      ? εTableAnyNothingJust l n db p v2
+ --  ==.(if a  
+ --        then PgHole (εDB l (updateDBNothingJust db n p v2))
+ --        else PgHole (εDB l db))
+ --      ? globals
+ --      ? use (not (εlc' `canFlowTo` l))
+ --  ==. ε l (if a 
+ --            then Pg lc' (updateDBNothingJust db n p v2) (TReturn TUnit)
+ --            else Pg lc' db (TReturn TException)) 
+ --  ==. ε l (eval (Pg lc db (TUpdate n (TPred p) TNothing (TJust (TLabeled l2 v2)))))
+ --  *** QED 
+
+  | (a /= εa) && labelPredTable p t `canFlowTo` l
+  =   ε l (eval (ε l (Pg lc db (TUpdate n (TPred p) TNothing (TJust (TLabeled l2 v2))))))
+      ? assume (tableLabel ti `canFlowTo` l) 
+      ? labelUpdateCheckEqNothingJust l lc p l2 v2 t
   *** QED
 
   
-  | not (canFlowTo (tableLabel ti) l)
-  -- TUpdateFound.C2: 
-  {- The erased always succeds 
-     The non erased can succed or fail depending on whether the table is empty or not
-  -}
-  =   ε l (eval (ε l (Pg lc db (TUpdate n (TPred p) TNothing (TJust (TLabeled l2 v2)))))) 
-  ==. ε l (eval (Pg lc (εDB l db) (εTerm l (TUpdate n (TPred p) TNothing (TJust (TLabeled l2 v2))))))
-  ==. ε l (eval (Pg lc (εDB l db) (TUpdate n (εTerm l (TPred p)) (εTerm l TNothing) (εTerm l (TJust (TLabeled l2 v2))))))
-  ==. ε l (eval (Pg lc (εDB l db) (TUpdate n (εTerm l (TPred p)) TNothing (TJust ((εTerm l (TLabeled l2 v2)))))))
-  ==. ε l (eval (Pg lc (εDB l db) (TUpdate n (TPred p) TNothing (TJust (TLabeled l2 εv2))))) 
-  ==. ε l (if εa 
-            then Pg εlc' (updateDBNothingJust (εDB l db) n p εv2) (TReturn TUnit)
-            else Pg εlc' (εDB l db) (TReturn TException))
-      ? globals
-      ? use (not (εlc' `canFlowTo` l))
-  ==. (if εa 
-         then PgHole (εDB l (updateDBNothingJust (εDB l db) n p εv2)) 
-         else PgHole (εDB l (εDB l db)))
-      ? εTableAnyNothingJust l n (εDB l db) p εv2
-  ==. PgHole (εDB l (εDB l db))
-       ? εDBIdempotent l db 
-  ==. PgHole (εDB l db)
-      ? εTableAnyNothingJust l n db p v2
-  ==.(if a  
-        then PgHole (εDB l (updateDBNothingJust db n p v2))
-        else PgHole (εDB l db))
-      ? globals
-      ? use (not (εlc' `canFlowTo` l))
-  ==. ε l (if a 
-            then Pg lc' (updateDBNothingJust db n p v2) (TReturn TUnit)
-            else Pg lc' db (TReturn TException)) 
-  ==. ε l (eval (Pg lc db (TUpdate n (TPred p) TNothing (TJust (TLabeled l2 v2)))))
-  *** QED 
-
-
-
-  | a && not εa  
+  | a && not εa 
   =   ε l (eval (ε l (Pg lc db (TUpdate n (TPred p) TNothing (TJust (TLabeled l2 v2))))))
+      -- -- debug
+      ?assume (tableLabel ti `canFlowTo` l)
+      -- -- debug
+      ? globals
+      ? assert (εlc' == lc' )
+      ? assert (not (labelPredTable p t `canFlowTo` l))
+      ? assert (not (lc' `canFlowTo` l))
   ==. ε l (eval (Pg lc (εDB l db) (εTerm l (TUpdate n (TPred p) TNothing (TJust (TLabeled l2 v2))))))
   ==. ε l (eval (Pg lc (εDB l db) (TUpdate n (εTerm l (TPred p)) (εTerm l TNothing) (εTerm l (TJust (TLabeled l2 v2))))))
   ==. ε l (eval (Pg lc (εDB l db) (TUpdate n (εTerm l (TPred p)) TNothing (TJust (εTerm l (TLabeled l2 v2))))))
   ==. ε l (eval (Pg lc (εDB l db) (TUpdate n (TPred p) TNothing (TJust (TLabeled l2 εv2)))))
-  ==. ε l (Pg εlc' (εDB l db) (TReturn TException)) 
-  ==. (if εlc' `canFlowTo` l 
-         then Pg εlc' (εDB l (εDB l db)) (εTerm l (TReturn TException))
-         else PgHole  (εDB l (εDB l db))
-      )
-      ? globals  
-  ==. (if field1Label ti `canFlowTo` l  
-        then Pg εlc' (εDB l (εDB l db)) (εTerm l (TReturn TException))
-             ? globals
-             ? assert (εTable l t == fromJust (lookupTable n (εDB l db)))
-             ? labelUpdateCheckEqNothingJust l lc p l2 v2 t
-              -- TUpdateFound.C1: raising with l1 and field 1 ensures that εlc' == lc' 
-        else PgHole (εDB l (εDB l db)))
+  ==. ε l (Pg εlc' (εDB l db) (TReturn TException))
+      ? assert (εlc' == lc' )
       ? globals
   ==. PgHole (εDB l (εDB l db))
-      ? εDBIdempotent l db 
+      ? εDBIdempotent l db
   ==. PgHole (εDB l db)
-      ? simulationsUpdateOneNothingJust l lc db n p l2 v2 t εt  
+      -- todo
+      ? assume ((εDB l (updateDBNothingJust db n p v2)) == (εDB l db))
   ==. PgHole (εDB l (updateDBNothingJust db n p v2))
       ? globals  
-  ==. (if field1Label ti `canFlowTo` l  
-        then Pg lc' (εDB l (updateDBNothingJust db n p v2)) (εTerm l (TReturn TUnit))
-        else PgHole (εDB l (updateDBNothingJust db n p v2)))
-      ? globals
-  ==. (if lc' `canFlowTo` l  
-        then Pg lc' (εDB l (updateDBNothingJust db n p v2)) (εTerm l (TReturn TUnit))
-        else PgHole (εDB l (updateDBNothingJust db n p v2)))
   ==. ε l (Pg lc' (updateDBNothingJust db n p v2) (TReturn TUnit))
   ==. ε l (eval (Pg lc db (TUpdate n (TPred p) TNothing (TJust (TLabeled l2 v2)))))
   *** QED 
-  -- | not a && εa 
+
+
+
+  | not a && εa 
+  =   ε l (eval (ε l (Pg lc db (TUpdate n (TPred p) TNothing (TJust (TLabeled l2 v2))))))
+     ? assume (tableLabel ti `canFlowTo` l)
+      ? globals
+      ? assert (εlc' == lc' )
+      ? assert (not (labelPredTable p t `canFlowTo` l))
+      ? assert (not (lc' `canFlowTo` l))
+  ==! ε l (eval (Pg lc (εDB l db) (εTerm l (TUpdate n (TPred p) TNothing (TJust (TLabeled l2 v2)))))) 
+  ==! ε l (eval (Pg lc (εDB l db) (TUpdate n (εTerm l (TPred p)) (εTerm l TNothing) (εTerm l (TJust (TLabeled l2 v2))))))
+  ==! ε l (eval (Pg lc (εDB l db) (TUpdate n (εTerm l (TPred p)) TNothing (TJust (εTerm l (TLabeled l2 v2)))))) 
+  ==! ε l (eval (Pg lc (εDB l db) (TUpdate n (TPred p) TNothing (TJust (TLabeled l2 εv2))))) 
+  ==! ε l (Pg εlc' (updateDBNothingJust (εDB l db) n p εv2) (TReturn TUnit))
+        ? assume ((εDB l (updateDBNothingJust (εDB l db) n p εv2)) == (εDB l db))
+
+      
+  ==! PgHole  (εDB l (updateDBNothingJust (εDB l db) n p εv2))
+
+  ==! PgHole (εDB l db) 
+  ==! ε l (Pg lc' db (TReturn TException))
+  ==! ε l (eval (Pg lc db (TUpdate n (TPred p) TNothing (TJust (TLabeled l2 v2)))))
+  *** QED 
+  -- | not a && not εa 
   -- =   ε l (eval (ε l (Pg lc db (TUpdate n (TPred p) TNothing (TJust (TLabeled l2 v2)))))) 
-  -- ==. ε l (eval (Pg lc (εDB l db) (εTerm l (TUpdate n (TPred p) TNothing (TJust (TLabeled l2 v2)))))) 
-  -- ==. ε l (eval (Pg lc (εDB l db) (TUpdate n (εTerm l (TPred p)) (εTerm l TNothing) (εTerm l (TJust (TLabeled l2 v2))))))
-  -- ==. ε l (eval (Pg lc (εDB l db) (TUpdate n (εTerm l (TPred p)) TNothing (TJust (εTerm l (TLabeled l2 v2)))))) 
+  -- ==. ε l (eval (Pg lc (εDB l db) (εTerm l (TUpdate n (TPred p) TNothing (TJust (TLabeled l2 v2))))))
+  -- ==. ε l (eval (Pg lc (εDB l db) (TUpdate n (εTerm l (TPred p)) (εTerm l TNothing) (εTerm l (TJust (TLabeled l2 v2)))))) 
+  -- ==. ε l (eval (Pg lc (εDB l db) (TUpdate n (εTerm l (TPred p)) TNothing (TJust (εTerm l (TLabeled l2 v2))))))
   -- ==. ε l (eval (Pg lc (εDB l db) (TUpdate n (TPred p) TNothing (TJust (TLabeled l2 εv2))))) 
-  -- ==. ε l (Pg εlc' (updateDBNothingJust (εDB l db) n p εv2) (TReturn TUnit))
-  -- ==. (if εlc' `canFlowTo` l 
-  --        then Pg εlc' (εDB l (updateDBNothingJust (εDB l db) n p εv2)) (εTerm l (TReturn TUnit))
-  --        else PgHole  (εDB l (updateDBNothingJust (εDB l db) n p εv2))
-  --     )
-  --     ? globals 
-  -- ==. (if field1Label ti `canFlowTo` l 
-  --        then Pg εlc' (εDB l (updateDBNothingJust (εDB l db) n p εv2)) (εTerm l (TReturn TUnit))
-  --             ? labelUpdateCheckEqNothingJust l lc p l2 v2 t
-  --             -- TUpdateFound.C1: raising with l1 and field 1 ensures that εlc' == lc' 
-  --        else PgHole  (εDB l (updateDBNothingJust (εDB l db) n p εv2))
-  --     )
-  --     ? globals 
-  -- ==. PgHole  (εDB l (updateDBNothingJust (εDB l db) n p εv2))
-  --     ? simulationsUpdateOneErasedNothingJust l lc db n p l2 v2 t εt
-  -- ==. PgHole (εDB l db) 
-  --     ? globals 
-  --     ? labelUpdateCheckEqNothingJust l lc p l2 v2 t
-  --     -- ? assert (not ((join (field1Label ti) l1) `canFlowTo` l))
-  --     ? assert (not (lc' `canFlowTo` l))
+  -- ==. ε l (Pg εlc' (εDB l db) (TReturn TException)) 
+  --     ? assert (lc' == εlc') 
+  -- ==. ε l (Pg lc' (εDB l db) (TReturn TException)) 
+  -- ==. (if lc' `canFlowTo` l 
+  --       then Pg lc' (εDB l (εDB l db)) (εTerm l (TReturn TException))
+  --       else PgHole (εDB l (εDB l db)))
+  --     ? εDBIdempotent l db 
+  -- ==. (if lc' `canFlowTo` l 
+  --       then Pg lc' (εDB l db) (εTerm l (TReturn TException))
+  --       else PgHole (εDB l db))
   -- ==. ε l (Pg lc' db (TReturn TException))
   -- ==. ε l (eval (Pg lc db (TUpdate n (TPred p) TNothing (TJust (TLabeled l2 v2)))))
-  -- *** QED 
-  | not a && not εa 
-  =   ε l (eval (ε l (Pg lc db (TUpdate n (TPred p) TNothing (TJust (TLabeled l2 v2)))))) 
-  ==. ε l (eval (Pg lc (εDB l db) (εTerm l (TUpdate n (TPred p) TNothing (TJust (TLabeled l2 v2))))))
-  ==. ε l (eval (Pg lc (εDB l db) (TUpdate n (εTerm l (TPred p)) (εTerm l TNothing) (εTerm l (TJust (TLabeled l2 v2)))))) 
-  ==. ε l (eval (Pg lc (εDB l db) (TUpdate n (εTerm l (TPred p)) TNothing (TJust (εTerm l (TLabeled l2 v2))))))
-  ==. ε l (eval (Pg lc (εDB l db) (TUpdate n (TPred p) TNothing (TJust (TLabeled l2 εv2))))) 
-  ==. ε l (Pg εlc' (εDB l db) (TReturn TException)) 
-      ? assert (lc' == εlc') 
-  ==. ε l (Pg lc' (εDB l db) (TReturn TException)) 
-  ==. (if lc' `canFlowTo` l 
-        then Pg lc' (εDB l (εDB l db)) (εTerm l (TReturn TException))
-        else PgHole (εDB l (εDB l db)))
-      ? εDBIdempotent l db 
-  ==. (if lc' `canFlowTo` l 
-        then Pg lc' (εDB l db) (εTerm l (TReturn TException))
-        else PgHole (εDB l db))
-  ==. ε l (Pg lc' db (TReturn TException))
-  ==. ε l (eval (Pg lc db (TUpdate n (TPred p) TNothing (TJust (TLabeled l2 v2)))))
-  *** QED
+  -- *** QED
 
 
   -- debug start
@@ -280,7 +270,9 @@ simulationsUpdateFlowsFoundNothingJust l lc db n p l2 v2 t εt
 
     globals = assert (Just t  == lookupTable n db)
               ? tableLabelCanFlowLabelPred p t
-
+              ? assert (field1Label ti `canFlowTo` tableLabel ti)
+              ? lawFlowTransitivity (field1Label ti) (tableLabel ti) l
+              
               ? labelPredTableEq l p t
               ? labelPredTableImplies l p t
               ? joinCanFlowTo lc (field1Label ti `join` labelPredTable p t) l
@@ -293,8 +285,8 @@ simulationsUpdateFlowsFoundNothingJust l lc db n p l2 v2 t εt
               ? tableLabelCanFlowLabelPred p εt
               ? labelPredTableEq l p εt
               ? labelPredTableImplies l p εt
-              ? joinCanFlowTo lc (field1Label ti `join` labelPredTable p εt) l
-              ? joinCanFlowTo (field1Label ti) (labelPredTable p εt) l
+              ? joinCanFlowTo lc (field1Label (tableInfo εt) `join` labelPredTable p εt) l
+              ? joinCanFlowTo (field1Label (tableInfo εt)) (labelPredTable p εt) l
               -- ? labelPredTableEraseEq l p εt
               ? readCanFlowToPred p εt
               ? labelPredTableErase l p εt
