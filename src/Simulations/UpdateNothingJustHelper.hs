@@ -138,6 +138,7 @@ simulationsUpdateRowsNJF1Flow l ti p l2 v2 (r:rs)
   where
     εv2 = if (canFlowTo l2 l) then v2 else THole
 
+{-@ ple simulationsUpdateRowNJF1Flow @-}
 {-@ simulationsUpdateRowNJF1Flow
   :: (Label l, Eq l)
   => l:l
@@ -155,20 +156,88 @@ simulationsUpdateRowNJF1Flow l ti p l2 v2 r@(Row k o1 o2)
   | not (field1Label ti `canFlowTo` l)
   -- contradiction
   =   lawFlowTransitivity (field1Label ti) (tableLabel ti) l
+  | makeValLabel ti o1 `canFlowTo` l, εep
+  =   εRow l ti (updateRowNothingJust p εv2 (εRow l ti r))
+  ==. εRow l ti (if εep then Row k o1 v2 else (εRow l ti r))
+  ==. εRow l ti (Row k o1 v2)
+
+  -- of course there's no reason why v2 would equal o2
+  -- need contradiction to finish the proof
+
+  -- given εep is true, we have updateRowLabel2 true
+  -- lfTable flows to makeValLabel ti o1
+  -- lfTable flows to l      
+  -- tableLabel flows to l
+  -- the two statements above imply labelPred flows to l
+  -- and thank god, we had a contradiction
+
+  -- evalPred might be true or false for r
+  -- true case is trivial
+  -- false case implies pDep2 is true
+  ==. εRow l ti (Row k o1 o2)
+  ==. εRow l ti r
+  *** QED
+
+  -- contradiction
   | makeValLabel ti o1 `canFlowTo` l
   =   εRow l ti r
-  ==. Row k (εTerm l o1) (εTerm l o2)
-    ? assert (εTerm l o1 == o1)
-    ? assert (εTerm l o2 == o2)
-    
-  ==. Row k o1 o2
-
-
+    ? εRowIdempotent l ti r
+  ==. εRow l ti εr
+  ==. εRow l ti (if εep then Row k o1 v2 else εr)
   ==. εRow l ti (updateRowNothingJust p εv2 r)
-  ==. εRow l ti (updateRowNothingJust p εv2 (εRow l ti r))
+  ==. εRow l ti (updateRowNothingJust p εv2 εr)
   *** QED
+  -- erased
+  | εep
+  =   εRow l ti (updateRowNothingJust p εv2 εr)
+  ==. εRow l ti (updateRowNothingJust p εv2 (Row k o1 THole))
+      ? assert (o1 == εTerm l o1)
+      ? assert (THole == εTerm l THole)
+  ==. εRow l ti (if evalPred p (Row k o1 THole) then (Row k o1 εv2)  else (Row k o1 THole))
+  ==. εRow l ti (Row k o1 εv2)
+  ==. Row k o1 THole
+  ==. εRow l ti r
+  *** QED
+  | otherwise
+  =   εRow l ti (updateRowNothingJust p εv2 εr)
+  ==. εRow l ti (updateRowNothingJust p εv2 (Row k o1 THole))
+      ? assert (o1 == εTerm l o1)
+      ? assert (THole == εTerm l THole)
+  ==. εRow l ti (if evalPred p (Row k o1 THole) then (Row k o1 εv2)  else (Row k o1 THole))
+  ==. εRow l ti (Row k o1 THole)
+  ==. Row k o1 THole
+  ==. εRow l ti r
+  *** QED  
   where 
-    εv2 = if (canFlowTo l2 l) then v2 else THole    
+    εv2 = if (canFlowTo l2 l) then v2 else THole
+    εr  = εRow l ti r
+    εep  = evalPred p εr
 
+
+-- they are actually equal. I only prove one direction for simplicity
+{-@ predFlowLfTable ::
+(Eq l, Label l)
+=> p:Pred
+-> t:Table l
+-> {canFlowTo (labelPredTable p t) (tableLabel (tableInfo t) `join` lfTable p t) }
+@-}
+predFlowLfTable :: (Eq l, Label l) => Pred -> Table l -> Proof
+predFlowLfTable p t@(Table ti rs)
+  =  predFlowLfRows p ti rs
+
+
+{-@ predFlowLfRows ::
+(Eq l, Label l)
+=> p:Pred
+-> ti:TInfo l
+-> rs:[Row l]
+-> {canFlowTo (labelPredRows p ti rs) (tableLabel ti `join` lfRows p ti rs) }
+@-}
+predFlowLfRows :: (Eq l, Label l) => Pred -> TInfo l -> [Row l] -> Proof
+predFlowLfRows p ti rs
+  | not (pDep1 p)
+  =   canFlowTo (labelPredRows p ti rs) (tableLabel ti `join` lfRows p ti rs)
+  ==. canFlowTo (tableLabel ti) (tableLabel ti `join` lfRows p ti rs)
+  *** QED
 
 
