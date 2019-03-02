@@ -219,7 +219,8 @@ simulationsUpdateRowNJF1Flow l ti p l2 v2 r@(Row k o1 o2)
 (Eq l, Label l)
 => p:Pred
 -> t:Table l
--> {canFlowTo (labelPredTable p t) (tableLabel (tableInfo t) `join` lfTable p t) }
+-> {canFlowTo (labelPredTable p t) (tableLabel (tableInfo t)) ||
+    canFlowTo (labelPredTable p t) }
 @-}
 predFlowLfTable :: (Eq l, Label l) => Pred -> Table l -> Proof
 predFlowLfTable p t@(Table ti rs)

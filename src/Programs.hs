@@ -504,16 +504,15 @@ eval (Pg lc db (TUpdate n (TPred p) TNothing (TJust (TLabeled l2 v2))))
   | Just t <- lookupTable n db
   , updateLabelCheckNothingJust lc t p l2 v2
   -- no need for label check since label info does not change
-  = let lc' = lc `join` (field1Label (tableInfo t)
-                        -- 
-                         `join` labelPredTable p t)
+  = let lc' = lc `join` ((field1Label (tableInfo t)
+                         `join` lfTable p t) `join` tableLabel (tableInfo t))
     in Pg lc' (updateDBNothingJust db n p v2) (TReturn TUnit)
 
 eval (Pg lc db (TUpdate n (TPred p) TNothing (TJust (TLabeled l2 v2))))
   | Just t <- lookupTable n db
   -- no need for label check since label info does not change
-  = let lc' = lc `join` (field1Label (tableInfo t)
-                         `join` labelPredTable p t)
+  = let lc' = lc `join` ((field1Label (tableInfo t)
+                         `join` lfTable p t) `join` tableLabel (tableInfo t))
     in Pg lc' db (TReturn TException)
     
 eval (Pg lc db (TUpdate n (TPred p) TNothing (TJust (TLabeled _ _))))   
