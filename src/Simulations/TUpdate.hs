@@ -193,7 +193,8 @@ simulationsUpdateDoesNotFlowNothingJust l lc db n p l2 v2
   | Just t <- lookupTable n db
   -- this case eval part flows
   , updateLabelCheckNothingJust lc t p l2 v2
-  =   let lc' = field1Label (tableInfo t) `join` labelPredTable p t in
+  =   let lc' = ((field1Label (tableInfo t)
+                         `join` lfTable p t) `join` tableLabel (tableInfo t)) in
       ε l (eval (ε l (Pg lc db (TUpdate n t1 t2 t3))))
   ==. ε l (eval (PgHole (εDB l db)))
   ==. ε l (PgHole (εDB l db))
@@ -224,7 +225,8 @@ simulationsUpdateDoesNotFlowNothingJust l lc db n p l2 v2
 
 simulationsUpdateDoesNotFlowNothingJust l lc db n p l2 v2   
   | Just t <- lookupTable n db 
-  =   let lc' = field1Label (tableInfo t) `join` labelPredTable p t in 
+  =   let lc' = ((field1Label (tableInfo t)
+                         `join` lfTable p t) `join` tableLabel (tableInfo t)) in 
       ε l (eval (ε l (Pg lc db (TUpdate n t1 t2 t3)))) 
   ==. ε l (eval (PgHole (εDB l db))) 
   ==. ε l (PgHole (εDB l db)) 
