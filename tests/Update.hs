@@ -9,6 +9,7 @@ main = liquid [
     "EraseTableAny.hs"
   , "LabelUpdateCheck.hs"
   , "LabelUpdateCheckNothingJust.hs"
+  , "UpdateNothingJustHelper.hs"
   , "Simulations/UpdateAny.hs"
   , "Simulations/UpdateAnyNothingJust.hs"
   , "Simulations/UpdateRowBySMT.hs"
