@@ -18,7 +18,6 @@ import LabelUpdateCheck
 import Simulations.Terms 
 import Simulations.UpdateNothingJust
 import LabelUpdateCheckNothingJust
-import Simulations.UpdateOneNothingJust
 
 import Prelude hiding (Maybe(..), fromJust, isJust)
 
@@ -209,6 +208,7 @@ simulationsUpdateFlowsFoundNothingJust l lc db n p l2 v2 t εt
       ? εDBIdempotent l db
   ==. PgHole (εDB l db)
       -- todo
+      ? lawFlowTransitivity (field1Label ti)  (tableLabel ti) l
       ? simulationsUpdateNJF1Flow' l lc db n p l2 v2 t εt
       -- ? assume ((εDB l (updateDBNothingJust db n p v2)) == (εDB l db))
   ==. PgHole (εDB l (updateDBNothingJust db n p v2))
@@ -234,7 +234,7 @@ simulationsUpdateFlowsFoundNothingJust l lc db n p l2 v2 t εt
   ==! ε l (eval (Pg lc (εDB l db) (TUpdate n (εTerm l (TPred p)) TNothing (TJust (εTerm l (TLabeled l2 v2)))))) 
   ==! ε l (eval (Pg lc (εDB l db) (TUpdate n (TPred p) TNothing (TJust (TLabeled l2 εv2))))) 
   ==! ε l (Pg εlc' (updateDBNothingJust (εDB l db) n p εv2) (TReturn TUnit))
-      ? simulationsUpdateNJF1Flow' l lc db n p l2 v2 t εt
+      ? simulationsUpdateNJF1Flow l lc db n p l2 v2 t εt
       
   ==! PgHole  (εDB l (updateDBNothingJust (εDB l db) n p εv2))
 

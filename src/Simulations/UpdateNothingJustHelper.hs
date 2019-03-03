@@ -7,17 +7,7 @@ import Labels
 import Programs 
 import Predicates 
 
-import Simulations.DeleteHelpers
 import Idempotence
-import LabelPredImplies
-import EraseTableAnyNothingJust
-import LookupTableErase 
-import LabelPredEraseEqual
-import LabelUpdateCheck
-import Simulations.Terms 
-import Simulations.UpdateNothingJust
-import LabelUpdateCheckNothingJust
-import Simulations.UpdateOneNothingJust
 
 import Prelude hiding (Maybe(..), fromJust, isJust)
 
@@ -255,8 +245,7 @@ simulationsUpdateRowNJF1Flow l lc lf ti p l2 v2 r@(Row k o1 o2)
   -> t: {Table l | (Just t == lookupTable n db) &&
                    (canFlowTo (tableLabel (tableInfo t)) l) &&
                    (canFlowTo (field1Label (tableInfo t)) l) &&
-                   (not (canFlowTo (lfTable p t) l)) &&
-                   (not (updateLabelCheckNothingJust lc t p l2 v2))}
+                   (not (canFlowTo (lfTable p t) l))}
   -> εt:{Table l | (Just εt == lookupTable n (εDB l db)) && (tableInfo εt == tableInfo t) &&
                    (updateLabelCheckNothingJust lc t p l2 v2) &&
                    (lfTable p t == lfTable p εt) &&
@@ -316,7 +305,7 @@ simulationsUpdateNJF1Flow' l lc ((Pair n' t@(Table ti rs)):ts) n p l2 v2 t' εt'
       -- *** QED)
       ? assert (updateLabelCheckNothingJust lc t' p l2 v2)
       ? ( updateLabelCheckNothingJust lc t' p l2 v2
-      ==! updateRowsCheckNothingJust lc (lfTable p t') ti p l2 v2 (εRows l ti rs)
+      ==! updateRowsCheckNothingJust lc (lfTable p t') ti p l2 v2 rs
       *** QED)
   -- ==. εDB l (updateDBNothingJust ((Pair n' (εTable l t)):εDB l ts) n p v2)
   -- ==. εDB l (updateDBNothingJust ((Pair n' (εTable l (Table ti rs))):εDB l ts) n p εv2)
