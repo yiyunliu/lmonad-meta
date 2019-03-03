@@ -15,11 +15,12 @@ updateRowsCheckEqNothingJust
   => l:l
   -> lc:{l | canFlowTo lc l}
   -> lf:l
-  -> ti:{TInfo l | canFlowTo (field1Label ti) l}
+  -> ti:{TInfo l | canFlowTo (tableLabel ti) l}
   -> p:Pred
   -> l2:l
   -> v2:SDBTerm l
-  -> rs: {[Row l] | (updateRowsCheckNothingJust lc lf ti p l2 v2 rs || updateRowsCheckNothingJust lc lf ti p l2 (if (canFlowTo l2 l) then (εTerm l v2) else THole) (εRows l ti rs))} 
+  -> rs: {[Row l] | 
+      (canFlowTo (lfRows p ti rs) l)} 
   -> {(updateRowsCheckNothingJust lc lf ti p l2 v2 rs ==
         updateRowsCheckNothingJust lc lf ti p l2 (if (canFlowTo l2 l) then (εTerm l v2) else THole) (εRows l ti rs)) }
   / [len rs] @-}
@@ -30,15 +31,24 @@ updateRowsCheckEqNothingJust l lc lφ ti p l2 v2 []
   
 updateRowsCheckEqNothingJust l lc lφ ti p l2 v2 (r:rs)
   =   updateRowsCheckNothingJust lc lφ ti p l2 v2 (r:rs)
-  ==. (updateRowCheckNothingJust lc lφ ti p l2 v2 r &&
+      ? ( lfRows p ti (r:rs)
+      ==. (lfRow p ti r `join` lfRows p ti rs)
+      *** QED
+      )
+      ? joinCanFlowTo (lfRow p ti r) (lfRows p ti rs) l
+      ? assert (lfRow p ti r `canFlowTo` l )
+      ? assert (lfRows p ti rs `canFlowTo` l)
+
+  ==! (updateRowCheckNothingJust lc lφ ti p l2 v2 r &&
         updateRowsCheckNothingJust lc lφ ti p l2 v2 rs)
+      ? lawFlowTransitivity (field1Label ti) (tableLabel ti) l
       ? assert (canFlowTo (field1Label ti) l)
       ? updateRowsCheckEqNothingJust l lc lφ ti p l2 v2 rs
       ? updateRowCheckEqNothingJust l lc lφ ti p l2 v2 r
-  ==. (updateRowCheckNothingJust lc lφ ti p l2 εv2 (εRow l ti r) &&
+  ==! (updateRowCheckNothingJust lc lφ ti p l2 εv2 (εRow l ti r) &&
         updateRowsCheckNothingJust lc lφ ti p l2 εv2 (εRows l ti rs))
-  ==. updateRowsCheckNothingJust lc lφ ti p l2 εv2 (εRow l ti r : εRows l ti rs)
-  ==. updateRowsCheckNothingJust lc lφ ti p l2 εv2 (εRows l ti (r:rs)) 
+  ==! updateRowsCheckNothingJust lc lφ ti p l2 εv2 (εRow l ti r : εRows l ti rs)
+  ==! updateRowsCheckNothingJust lc lφ ti p l2 εv2 (εRows l ti (r:rs)) 
   *** QED
   where εv2 = if (canFlowTo l2 l) then (εTerm l v2) else THole
 
@@ -50,53 +60,36 @@ updateRowCheckEqNothingJust
   => l:l
   -> lc:{l | canFlowTo lc l}
   -> lf:l
-  -> ti:{TInfo l | canFlowTo (field1Label ti) l}
+  -> ti:{TInfo l | canFlowTo (tableLabel ti) l}
   -> p:Pred
   -> l2:l
   -> v2:SDBTerm l
-  -> r: {Row l | (canFlowTo (lfRow p ti r) lf) && (updateRowCheckNothingJust lc lf ti p l2 v2 r || updateRowCheckNothingJust lc lf ti p l2 (if (canFlowTo l2 l) then (εTerm l v2) else THole) (εRow l ti r))}
+  -> r: {Row l | (canFlowTo (lfRow p ti r) l)}
   -> {(updateRowCheckNothingJust lc lf ti p l2 v2 r ==
         updateRowCheckNothingJust lc lf ti p l2 (if (canFlowTo l2 l) then (εTerm l v2) else THole) (εRow l ti r))}
 @-}
 
 updateRowCheckEqNothingJust :: (Eq l, Label l) => l -> l -> l -> TInfo l -> Pred -> l -> Term l -> Row l -> Proof
 updateRowCheckEqNothingJust l lc lφ ti p l2 v2 r@(Row k v1 _)
-  | canFlowTo (labelPredRow p ti r) l
   =   updateRowCheckNothingJust lc lφ ti p l2 v2 r
   ==. updateRowLabel2 lc lφ ti p (field1Label ti) v1 l2 v2 r
   ==. ((l2 `join` lc) `join` lφ) `canFlowTo` makeValLabel ti v1
+      ? assert (canFlowTo (field1Label ti) (tableLabel ti))  
+      ? lawFlowTransitivity (field1Label ti) (tableLabel ti) l
       ? assert (canFlowTo (field1Label ti) l)
       ? assert (εv1 == v1)
+      ? lawFlowTransitivity (field1Label ti) (tableLabel ti) l
+      ? joinCanFlowTo (field1Label ti) (makeValLabel ti (rowField1 r)) l
+      ? use (lfRow p ti r == makeValLabel ti v1)
+      ? use (labelPredRow p ti r == (field1Label ti `join` makeValLabel ti v1))
+      ? simulationsEvalPred p r l ti            
   ==. ((l2 `join` lc) `join` lφ) `canFlowTo` makeValLabel ti (rowField1 (εRow l ti r))
   ==. updateRowLabel2 lc lφ ti p (field1Label ti) (rowField1 (εRow l ti r)) l2 εv2 (εRow l ti r)
   ==. updateRowCheckNothingJust lc lφ ti p l2 εv2 (εRow l ti r)
-      ? simulationsEvalPred p r l ti
+  ==. updateRowCheckNothingJust lc lφ ti p l2 (if (canFlowTo l2 l) then (εTerm l v2) else THole) (εRow l ti r)
   *** QED
-  | not (pDep2 p)
-  =   ()
-  | not (updateRowCheckNothingJust lc lφ ti p l2 εv2 (εRow l ti r))
-  -- dependent on 2, and labelPredRow not satisfied
-  =   updateRowCheckNothingJust lc lφ ti p l2 εv2 (εRow l ti r)
-      ? joinCanFlowTo (field1Label ti) (makeValLabel ti (rowField1 r)) l
-      ? assert (not (canFlowTo (makeValLabel ti (rowField1 r)) l))
-      ? joinCanFlowTo (l2 `join` lc) lφ (makeValLabel ti v1)
-      -- ? lawFlowTransitivity (makeValLabel ti (rowField1 r)) 
-      ? use (lφ `canFlowTo`  (makeValLabel ti v1))
-  ==. updateRowCheckNothingJust lc lφ ti p l2 εv2 εr
-      ? (evalPred p r *** QED )
-      ? (evalPred p (εRow l ti r) *** QED )
-      ? (evalPred p εr *** QED )
-      -- false
-  ==. updateRowCheckNothingJust lc lφ ti p l2 v2 r
-  *** QED
-  | otherwise
-  =   ()
- where εv1 = if (canFlowTo (field1Label ti) l) then (εTerm l v1) else THole
-       εv2 = if (canFlowTo l2 l) then (εTerm l v2) else THole
-       εr  = Row k (εTerm l v1) THole
-        
-        
-
+  where εv1 = if (canFlowTo (field1Label ti) l) then (εTerm l v1) else THole
+        εv2 = if (canFlowTo l2 l) then (εTerm l v2) else THole
         
 
 {-@ 
@@ -107,19 +100,20 @@ labelUpdateCheckEqNothingJust
   -> p:Pred
   -> l2:l
   -> v2:SDBTerm l
-  -> t:{Table l | canFlowTo (tableLabel (tableInfo t)) l &&
-        (updateLabelCheckNothingJust lc t p l2 v2 || updateLabelCheckNothingJust lc (εTable l t) p l2 (if (canFlowTo l2 l) then (εTerm l v2) else THole))}
+  -> t:{Table l | canFlowTo (tableLabel (tableInfo t)) l}
   -> { (canFlowTo (lfTable p t)  l) 
   => updateLabelCheckNothingJust lc t p l2 v2 == updateLabelCheckNothingJust lc (εTable l t) p l2 (if (canFlowTo l2 l) then (εTerm l v2) else THole) }
 @-}
 labelUpdateCheckEqNothingJust :: (Eq l, Label l) => l -> l -> Pred -> l -> Term l -> Table l -> Proof 
 labelUpdateCheckEqNothingJust l lc p l2 v2 t@(Table ti@(TInfo lt _ lf1 _ _) rs)
-   | canFlowTo (labelPredTable p t) l
+   | canFlowTo (lfTable p t) l
   =   updateLabelCheckNothingJust lc (εTable l (Table ti rs)) p l2 εv2
   ==. updateLabelCheckNothingJust lc (Table ti (εRows l ti rs)) p l2 εv2
   ==. updateRowsCheckNothingJust lc (lfTable p (Table ti (εRows l ti rs))) ti p l2 εv2 (εRows l ti rs)
       ? (   lfTable p (Table ti (εRows l ti rs))
-        ==. lfRows p ti rs 
+        ==. lfRows p ti rs
+            ? assert ((field1Label ti) `canFlowTo` (tableLabel ti))
+            ? lawFlowTransitivity  (field1Label ti)  (tableLabel ti)  l
             ? lfRowsEq l p ti rs 
         ==. lfRows p ti (εRows l ti rs)
         ==. lfTable p (Table ti rs) *** QED )
