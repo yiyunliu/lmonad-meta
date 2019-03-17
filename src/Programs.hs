@@ -293,9 +293,9 @@ updateRowsCheckJN lc lφ ti p l1 v1 (r:rs)
 
 {-@ reflect updateRowCheckJN @-}
 updateRowCheckJN :: (Label l, Eq l) => l -> l -> TInfo l -> Pred -> l -> Term l -> Row l -> Bool 
-updateRowCheckJN lc lφ ti p l1 v1 r@(Row k _ o2)
-  =  (updateRowLabel1 lc lφ ti p l1 v1 (makeValLabel ti v1) o2 r)
-   && (updateRowLabel2 lc lφ ti p l1 v1 (makeValLabel ti v1) o2 r)
+updateRowCheckJN lc lφ ti p l1 v1 r@(Row k o1 o2)
+  =  (updateRowLabel1 lc lφ ti p l1 v1 (makeValLabel ti o1) o2 r)
+   && (updateRowLabel2 lc lφ ti p l1 v1 (makeValLabel ti o1) o2 r)
 
 {-@ reflect updateLabelCheck @-}
 updateLabelCheck :: (Label l, Eq l) => l -> Table l -> Pred -> l -> Term l -> l -> Term l -> Bool 
