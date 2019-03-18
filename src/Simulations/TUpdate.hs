@@ -14,8 +14,11 @@ import LabelPredEraseEqual
 import Simulations.Terms 
 import Simulations.UpdateAny
 import Simulations.UpdateAnyNothingJust
+import Simulations.UpdateAnyJN
 import Simulations.TUpdateFound
 import Simulations.TUpdateFoundNothingJust
+import Simulations.TUpdateFoundJN
+  
 import Prelude hiding (Maybe(..), fromJust, isJust) 
 
 {-@ simulationsTUpdate  
@@ -47,6 +50,17 @@ simulationsTUpdate l lc db n t1@(TPred p) t2@TNothing t3@(TJust (TLabeled l2 v2)
   | otherwise
   = assert (ς (Pg lc db (TUpdate n t1 t2 t3))) &&&
     simulationsUpdateDoesNotFlowNothingJust l lc db n p l2 v2
+
+
+simulationsTUpdate l lc db n t1@(TPred p) t2@(TJust (TLabeled l1 v1)) t3@TNothing 
+ | lc `canFlowTo` l
+  -- todo
+ = assert (ς (Pg lc db (TUpdate n t1 t2 t3))) &&&
+    simulationsUpdateFlowsJN  l lc db n p l1 v1
+  | otherwise
+  = assert (ς (Pg lc db (TUpdate n t1 t2 t3))) &&&
+    simulationsUpdateDoesNotFlowJN l lc db n p l1 v1
+
 
 simulationsTUpdate _ lc db n p t1 t2 
   = assert (ς (Pg lc db (TUpdate n p t1 t2)))
@@ -297,3 +311,105 @@ simulationsUpdateFlowsNothingJust l lc db n p l2 v2
   ==. ε l (eval (Pg lc db (TUpdate n (TPred p) TNothing (TJust (TLabeled l2 v2))))) 
   *** QED 
 
+
+
+
+
+{-@ simulationsUpdateFlowsJN
+  :: Label l => l:l 
+  -> lc:{l | canFlowTo lc l }
+  -> db:DB l 
+  -> n:TName 
+  -> p:Pred 
+  -> l1:l
+  -> v1:SDBTerm l 
+  -> { ε l (eval (ε l (Pg lc db (TUpdate n (TPred p) (TJust (TLabeled l1 v1)) TNothing)))) == ε l (eval (Pg lc db (TUpdate n (TPred p) (TJust (TLabeled l1 v1)) TNothing))) } 
+  @-}
+simulationsUpdateFlowsJN :: (Label l, Eq l) 
+  => l -> l -> DB l -> TName -> Pred -> l -> Term l -> Proof
+simulationsUpdateFlowsJN l lc db n p l1 v1 = ()
+
+
+
+
+{-@ simulationsUpdateDoesNotFlowJN
+  :: Label l => l:l 
+  -> lc:{l | not (canFlowTo lc l) }
+  -> db:DB l 
+  -> n:TName 
+  -> p:Pred 
+  -> l1:l
+  -> v1:{SDBTerm l | ς (Pg lc db (TUpdate n (TPred p) (TJust (TLabeled l1 v1)) TNothing))} 
+  -> { ε l (eval (ε l (Pg lc db (TUpdate n (TPred p) (TJust (TLabeled l1 v1)) TNothing)))) == ε l (eval (Pg lc db (TUpdate n (TPred p) (TJust (TLabeled l1 v1)) TNothing))) } 
+  @-}
+simulationsUpdateDoesNotFlowJN :: (Label l, Eq l) 
+  => l -> l -> DB l -> TName -> Pred -> l -> Term l -> Proof
+
+simulationsUpdateDoesNotFlowJN l lc db n p l1 v1 
+  | Just t <- lookupTable n db
+  ,  updateLabelCheckJN lc t p l1 v1 
+  =   let lc' = ((l1
+                         `join` (lfTable p t))
+                         `join` tableLabel (tableInfo t))  in 
+      ε l (eval (ε l (Pg lc db (TUpdate n t1 t2 t3)))) 
+  ==. ε l (eval (PgHole (εDB l db))) 
+  ==. ε l (PgHole (εDB l db)) 
+  ==. PgHole (εDB l (εDB l db)) 
+      ? εDBIdempotent l db 
+  ==. PgHole (εDB l db)
+      ? assert (isJust (lookupTable n db))
+      ? assert (Just t == lookupTable n db)
+      ? lookupTableErase l n db 
+      ? assert (isJust (lookupTable n (εDB l db)))
+      ? assert (updateLabelCheckJN lc t p l1 v1)
+      ? simulationsUpdateAnyJN l lc db n p l1 v1 t 
+      ? assert (εDB l db == εDB l (updateDBJN db n p v1)) 
+  ==. PgHole (εDB l (updateDBJN db n p v1))
+      ? joinCanFlowTo lc lc' l 
+  ==. ε l (Pg (lc `join` lc') (updateDBJN db n p v1) TUnit) 
+  ==. ε l (eval (Pg lc db (TUpdate n t1 t2 t3))) 
+  *** QED 
+  where
+    t1 = TPred p 
+    t2 = TJust (TLabeled l1 v1)
+    t3 = TNothing
+
+simulationsUpdateDoesNotFlowJN l lc db n p l1 v1 
+  | Just t <- lookupTable n db 
+  =   let lc' = ((l1
+                         `join` (lfTable p t))
+                         `join` tableLabel (tableInfo t)) in 
+      ε l (eval (ε l (Pg lc db (TUpdate n t1 t2 t3)))) 
+  ==. ε l (eval (PgHole (εDB l db))) 
+  ==. ε l (PgHole (εDB l db)) 
+  ==. PgHole (εDB l (εDB l db)) 
+      ? εDBIdempotent l db 
+  ==. PgHole (εDB l db)
+      ? joinCanFlowTo lc lc' l 
+  ==. ε l (Pg (lc `join` lc') db (TReturn TException)) 
+  ==. ε l (eval (Pg lc db (TUpdate n t1 t2 t3))) 
+  *** QED 
+  where
+    t1 = TPred p 
+    t2 = TJust (TLabeled l1 v1)
+    t3 = TNothing
+
+-- a separate function
+-- todo: update label check success. nothing just.
+
+-- todo: update label check fail. table found. nothing just
+
+simulationsUpdateDoesNotFlowJN l lc db n p l1 v1 
+  =   ε l (eval (ε l (Pg lc db (TUpdate n t1 t2 t3)))) 
+  ==. ε l (eval (PgHole (εDB l db))) 
+  ==. ε l (PgHole (εDB l db)) 
+  ==. PgHole (εDB l (εDB l db)) 
+      ? εDBIdempotent l db 
+  ==. PgHole (εDB l db)
+  ==. ε l (Pg lc db TException) 
+  ==. ε l (eval (Pg lc db (TUpdate n t1 t2 t3))) 
+  *** QED 
+  where
+    t1 = TPred p 
+    t2 = TJust (TLabeled l1 v1)
+    t3 = TNothing

@@ -522,7 +522,8 @@ eval (Pg lc db (TUpdate n (TPred p) TNothing (TJust (TLabeled _ _))))
 eval (Pg lc db (TUpdate n (TPred p) (TJust (TLabeled l1 v1)) TNothing))   
   | Just t <- lookupTable n db 
   , updateLabelCheckJN lc t p l1 v1
-  = let lc' = lc `join` ((field1Label (tableInfo t) `join` l1) -- this is for TUpdateFound.C1
+  = let lc' = lc `join` ((l1 -- l1 joined or not: dependent on p
+                         `join` (lfTable p t))-- this is for TUpdateFound.C1
                          `join` tableLabel (tableInfo t))      -- this is for TUpdateFound.C2
     in 
     Pg lc' (updateDBJN db n p v1) (TReturn TUnit)
@@ -530,7 +531,10 @@ eval (Pg lc db (TUpdate n (TPred p) (TJust (TLabeled l1 v1)) TNothing))
 
 eval (Pg lc db (TUpdate n (TPred p) (TJust (TLabeled l1 v1)) TNothing))   
   | Just t <- lookupTable n db 
-  = let lc' = lc `join` ((field1Label (tableInfo t) `join` l1) `join` tableLabel (tableInfo t))  in 
+  = let lc' = lc `join` ((l1
+                         `join` (lfTable p t))
+                         `join` tableLabel (tableInfo t))
+    in 
     Pg lc' db (TReturn TException)
 
 eval (Pg lc db (TUpdate n (TPred p) (TJust (TLabeled _ _)) TNothing))   
