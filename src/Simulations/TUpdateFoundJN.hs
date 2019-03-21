@@ -11,11 +11,9 @@ import Idempotence
 import EraseTableAnyJN
 import LookupTableErase
 import LabelUpdateCheckJN (labelUpdateCheckEqJN)
--- import LabelPredEraseEqual
--- import LabelUpdateCheck
 import Simulations.Terms 
 import Simulations.UpdateJN
--- import Simulations.UpdateOne
+import Simulations.UpdateJNHelper
 
 import Prelude hiding (Maybe(..), fromJust, isJust)
 
@@ -105,7 +103,6 @@ simulationsUpdateFlowsFoundJN l lc db n p l1 v1 t εt
        else PgHole (εDB l (updateDBJN (εDB l db) n p εv1))
       )
       ? simulationsUpdateJN l lc db n p l1 v1 t εt
-      -- ? assume (εDB l (updateDBJN (εDB l db) n p εv1) == εDB l (updateDBJN db n p v1))
   ==. (if lc' `canFlowTo` l
        then Pg lc' (εDB l (updateDBJN db n p v1)) (TReturn TUnit)
        else PgHole (εDB l (updateDBJN db n p v1))
@@ -174,7 +171,7 @@ simulationsUpdateFlowsFoundJN l lc db n p l1 v1 t εt
       ? εDBIdempotent l db
       ? assert (εlc' == lc')
       ? assert (not (εlc' `canFlowTo` l))
-      ? assume (εDB l (updateDBJN db n p v1) == εDB l db)
+      ? simulationsUpdateJNF1Flow' l lc db n p l1 v1 t εt
   ==. ε l (Pg εlc' (εDB l db) (TReturn TException))
   ==. PgHole (εDB l (εDB l db) )
   ==. PgHole (εDB l db)
@@ -207,7 +204,7 @@ simulationsUpdateFlowsFoundJN l lc db n p l1 v1 t εt
       ? εDBIdempotent l db
       ? assert (εlc' == lc')
       ? assert (not (εlc' `canFlowTo` l))
-      ? assume (εDB l (updateDBJN (εDB l db) n p εv1) == εDB l db)      
+      ? simulationsUpdateJNF1Flow l lc db n p l1 v1 t εt
   ==. ε l (Pg εlc' (updateDBJN (εDB l db) n p εv1) (TReturn TUnit))
   ==. PgHole (εDB l (updateDBJN (εDB l db) n p εv1))
 
@@ -251,29 +248,7 @@ simulationsUpdateFlowsFoundJN l lc db n p l1 v1 t εt
               ? joinCanFlowTo (l1 `join` (lfTable p εt)) (tableLabel ti) l
               ? joinCanFlowTo l1 (lfTable p εt) l              
               
-              -- ? joinCanFlowTo lc ((field1Label ti `join` lfTable p t) `join` tableLabel ti) l
-              -- ? joinCanFlowTo (field1Label ti `join` lfTable p t) (tableLabel ti) l
-              -- ? joinCanFlowTo (field1Label ti) (lfTable p t) l
-              
-              -- ? joinCanFlowTo (field1Label ti) (lfTable p t) l
-              -- ? lfTableEraseEq l p t
-              -- ? readCanFlowToPred p t
-              -- ? lfTableErase l p t
-
-
-              -- ? tableLabelCanFlowLabelPred p εt
               ? lfTableEq l p εt
-              -- ? lfTableImplies l p εt
-              -- ? joinCanFlowTo lc ((field1Label ti `join` lfTable p εt) `join` tableLabel ti) l
-              -- ? joinCanFlowTo (field1Label ti `join` lfTable p εt) (tableLabel ti) l
-              -- ? joinCanFlowTo (field1Label ti) (lfTable p εt) l
-              -- ? joinCanFlowTo (field1Label ti) (lfTable p εt) l
-              
-              -- ? joinCanFlowTo lc (field1Label (tableInfo εt) `join` lfTable p εt) l
-              -- ? joinCanFlowTo (field1Label (tableInfo εt)) (lfTable p εt) l
-              -- ? lfTableEraseEq l p εt
-              -- ? readCanFlowToPred p εt
-              -- ? lfTableErase l p εt
 
               ? joinCanFlowTo (tableLabel ti) (field1Label ti) l
               ? assert (Just εt == lookupTable n (εDB l db)) 
