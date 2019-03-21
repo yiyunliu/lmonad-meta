@@ -113,11 +113,11 @@ simulationsUpdateRowJN
 simulationsUpdateRowJN l lc lφ ti p l1 v1 r@(Row k o1 o2) 
   =   εRow l ti r 
       ? assert (updateRowCheckJN lc lφ ti p l1 v1 r) 
-      ? assert (updateRowLabel1 lc lφ ti p l1 v1 (makeValLabel ti o1) o2 r) 
+      ? use (updateRowLabel1 lc lφ ti p l1 v1 (makeValLabel ti o1) o2 r) 
       ? joinCanFlowTo (l1 `join` lc) lφ (field1Label ti)
       ? joinCanFlowTo l1 lc (field1Label ti)
       ? lawFlowTransitivity lc (field1Label ti) l
-      ? assert (not (field1Label ti `canFlowTo` l))
+      ? use (not (field1Label ti `canFlowTo` l))
   ==. Row k THole THole
   ==. εRow l ti (updateRowJN p v1 r)
   *** QED 
