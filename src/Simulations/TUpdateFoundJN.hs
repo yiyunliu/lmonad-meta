@@ -10,6 +10,7 @@ import Predicates
 import Idempotence 
 import EraseTableAnyJN
 import LookupTableErase
+import LabelUpdateCheckJN (labelUpdateCheckEqJN)
 -- import LabelPredEraseEqual
 -- import LabelUpdateCheck
 import Simulations.Terms 
@@ -148,7 +149,8 @@ simulationsUpdateFlowsFoundJN l lc db n p l1 v1 t εt
   ==. ε l (eval (Pg lc db (TUpdate n (TPred p) (TJust (TLabeled l1 v1)) TNothing)))
   *** QED  
   | lfTable p t `canFlowTo` l
-  =   assume (a == εa)
+  =   labelUpdateCheckEqJN l lc p l1 v1 t
+    ? assert (a == εa)
   | a && not εa
   =   ε l (eval (ε l (Pg lc db (TUpdate n (TPred p)
                                   (TJust (TLabeled l1 v1))

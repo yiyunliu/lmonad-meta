@@ -1,5 +1,6 @@
 {-@ LIQUID "--reflection"  @-}
 {-@ infix :  @-}
+
 module LabelUpdateCheckJN where
 
 import Labels 
@@ -8,6 +9,10 @@ import Prelude hiding (Maybe(..), fromJust, isJust)
 import Programs 
 import Simulations.Predicates
 import ProofCombinators 
+
+-- copy/pasted from LabelUpdateCheckNothingJust.hs
+-- used global text substitution and extra lemmas for the proof to go through
+-- as long as SMT solver is happy
 
 {-@ 
 updateRowsCheckEqJN
