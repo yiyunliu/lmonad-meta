@@ -286,16 +286,16 @@ updateLabelCheckJN lc t@(Table ti rs) p l1 v1
 updateRowsCheckJN :: (Label l, Eq l) => l -> l -> TInfo l -> Pred -> l -> Term l -> [Row l] -> Bool 
 {-@ updateRowsCheckJN :: (Label l, Eq l) => l -> l -> TInfo l -> Pred -> l -> Term l -> rs:[Row l] -> Bool / [len rs] @-}
 updateRowsCheckJN _ _ _ _ _ _ []            = True 
-updateRowsCheckJN lc lφ ti p l1 v1 (r:rs) | evalPred p r
-  = updateRowCheckJN lc lφ ti p l1 v1 r && updateRowsCheckJN lc lφ ti p l1 v1 rs
 updateRowsCheckJN lc lφ ti p l1 v1 (r:rs)
-  = updateRowsCheckJN lc lφ ti p l1 v1 rs
+  = updateRowCheckJN lc lφ ti p l1 v1 r && updateRowsCheckJN lc lφ ti p l1 v1 rs
+-- updateRowsCheckJN lc lφ ti p l1 v1 (r:rs)
+--   = updateRowsCheckJN lc lφ ti p l1 v1 rs
 
 {-@ reflect updateRowCheckJN @-}
 updateRowCheckJN :: (Label l, Eq l) => l -> l -> TInfo l -> Pred -> l -> Term l -> Row l -> Bool 
 updateRowCheckJN lc lφ ti p l1 v1 r@(Row k o1 o2)
-  =  (updateRowLabel1 lc lφ ti p l1 v1 (makeValLabel ti o1) o2 r)
-   && (updateRowLabel2 lc lφ ti p l1 v1 (makeValLabel ti o1) o2 r)
+  =  if evalPred p r then (updateRowLabel1 lc lφ ti p l1 v1 (makeValLabel ti o1) o2 r)
+   && (updateRowLabel2 lc lφ ti p l1 v1 (makeValLabel ti o1) o2 r) else True
 
 {-@ reflect updateLabelCheck @-}
 updateLabelCheck :: (Label l, Eq l) => l -> Table l -> Pred -> l -> Term l -> l -> Term l -> Bool 

@@ -327,7 +327,32 @@ simulationsUpdateFlowsNothingJust l lc db n p l2 v2
   @-}
 simulationsUpdateFlowsJN :: (Label l, Eq l) 
   => l -> l -> DB l -> TName -> Pred -> l -> Term l -> Proof
-simulationsUpdateFlowsJN l lc db n p l1 v1 = ()
+simulationsUpdateFlowsJN l lc db n p l1 v1
+  | Just t  <- lookupTable n db
+  , Just εt <- lookupTable n (εDB l db)
+  =   lookupTableErase l n db 
+  &&& simulationsUpdateFlowsFoundJN l lc db n p l1 v1 t εt
+simulationsUpdateFlowsJN l lc db n p l1 v1
+  =   ε l (eval (ε l (Pg lc db (TUpdate n (TPred p) (TJust (TLabeled l1 v1)) TNothing))))
+  ==. ε l (eval (Pg lc (εDB l db) (εTerm l (TUpdate n (TPred p) (TJust (TLabeled l1 v1)) TNothing)))) 
+  ==. ε l (eval (Pg lc (εDB l db) (TUpdate n (εTerm l (TPred p)) (εTerm l (TJust (TLabeled l1 v1))) (εTerm l TNothing))))
+  ==. ε l (eval (Pg lc (εDB l db) (TUpdate n (εTerm l (TPred p)) (TJust (εTerm l (TLabeled l1 v1))) TNothing)))
+      ? lookupTableErase l n db 
+      ? (case lookupTable n (εDB l db) of 
+          Just _ -> assert (isJust (lookupTable n db))
+          Nothing -> assert (not (isJust (lookupTable n db))))
+      ? (case lookupTable n db of 
+          Just _ -> assert (isJust (lookupTable n (εDB l db)))
+          Nothing -> assert (not (isJust (lookupTable n (εDB l db)))))
+  ==. ε l (Pg lc (εDB l db) TException) 
+  ==. Pg lc (εDB l (εDB l db)) (εTerm l TException) 
+      ? εDBIdempotent l db 
+  ==. Pg lc (εDB l db) (εTerm l TException) 
+  ==. ε l (Pg lc db TException) 
+      ? lookupTableErase l n db 
+  ==. ε l (eval (Pg lc db (TUpdate n (TPred p) (TJust (TLabeled l1 v1)) TNothing))) 
+  *** QED 
+
 
 
 
