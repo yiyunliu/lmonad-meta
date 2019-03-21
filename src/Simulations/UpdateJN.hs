@@ -159,19 +159,6 @@ simulationsUpdateRowsJN l lc lφ εlφ ti p l1 v1 (r:rs)
     Row k o1 o2 = r
     
 
--- {-@ simulationsEvalPred'
---  :: p : Pred
---  -> r : Row l
---  -> l : l
---  -> ti : TInfo l
---  -> { canFlowTo (labelPredRow p ti r) l => evalPred p r == evalPred p (εRow l ti r) }
---  @-}
--- simulationsEvalPred' :: (Eq l, Label l) => Pred -> Row l -> l -> TInfo l -> Proof
--- simulationsEvalPred' p r@(Row k v1 v2) l ti
---   |  canFlowTo (labelPredRow p ti r) l
---   = simulationsEvalPred p r l ti
---   |  otherwise
---   = ()
 
 {-@ simulationsUpdateRowJN
   :: (Label l, Eq l)

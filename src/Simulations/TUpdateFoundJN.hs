@@ -99,21 +99,121 @@ simulationsUpdateFlowsFoundJN l lc db n p l1 v1 t εt
       ? εDBIdempotent l db
       ? assert (εlc' == lc')
   ==. ε l (Pg εlc' (updateDBJN (εDB l db) n p εv1) (TReturn TUnit))
-  ==. (if lc' `canFlowTo` l
+  ==. (if εlc' `canFlowTo` l
        then Pg εlc' (εDB l (updateDBJN (εDB l db) n p εv1)) (TReturn TUnit)
        else PgHole (εDB l (updateDBJN (εDB l db) n p εv1))
       )
       ? simulationsUpdateJN l lc db n p l1 v1 t εt
       -- ? assume (εDB l (updateDBJN (εDB l db) n p εv1) == εDB l (updateDBJN db n p v1))
-  ==. (if εlc' `canFlowTo` l
+  ==. (if lc' `canFlowTo` l
        then Pg lc' (εDB l (updateDBJN db n p v1)) (TReturn TUnit)
        else PgHole (εDB l (updateDBJN db n p v1))
       )
   ==. ε l (Pg lc' (updateDBJN db n p v1) (TReturn TUnit))
   ==. ε l (eval (Pg lc db (TUpdate n (TPred p) (TJust (TLabeled l1 v1)) TNothing)))
   *** QED
-  | otherwise
-  =   ()
+
+  | not a , not εa
+  =   ε l (eval (ε l (Pg lc db (TUpdate n (TPred p) (TJust (TLabeled l1 v1)) TNothing))))
+    ? globals
+  ==. ε l (eval (Pg lc (εDB l db)
+                  (εTerm l (TUpdate n (TPred p)
+                             (TJust (TLabeled l1 v1))
+                             TNothing)))) 
+  ==. ε l (eval (Pg lc (εDB l db)
+                  (TUpdate n (εTerm l (TPred p))
+                   (εTerm l (TJust (TLabeled l1 v1)))
+                   (εTerm l TNothing))))
+  ==. ε l (eval (Pg lc (εDB l db)
+                  (TUpdate n (εTerm l (TPred p))
+                   (TJust (εTerm l  (TLabeled l1 v1)))
+                   TNothing)))
+  ==. ε l (eval (Pg lc (εDB l db) (TUpdate n (TPred p)
+                                     (TJust (TLabeled l1 εv1))
+                                     TNothing)))
+  ==. ε l (Pg εlc' (εDB l db) (TReturn TException))
+      ? εDBIdempotent l db
+      ? assert (εlc' == lc')
+  ==. (if εlc' `canFlowTo` l
+       then Pg εlc' (εDB l (εDB l db)) (TReturn TUnit)
+       else PgHole (εDB l (εDB l db))
+      )
+
+  ==. (if lc' `canFlowTo` l
+       then Pg lc' (εDB l db) (TReturn TUnit)
+       else PgHole (εDB l db)
+      )
+  
+  ==. ε l (Pg lc' (updateDBJN db n p v1) (TReturn TUnit))
+  ==. ε l (eval (Pg lc db (TUpdate n (TPred p) (TJust (TLabeled l1 v1)) TNothing)))
+  *** QED  
+  | lfTable p t `canFlowTo` l
+  =   assume (a == εa)
+  | a && not εa
+  =   ε l (eval (ε l (Pg lc db (TUpdate n (TPred p)
+                                  (TJust (TLabeled l1 v1))
+                                   TNothing))))
+  ==. ε l (eval (Pg lc (εDB l db)
+                  (εTerm l (TUpdate n (TPred p)
+                             (TJust (TLabeled l1 v1))
+                             TNothing))))       
+  ==. ε l (eval (Pg lc (εDB l db)
+                  (TUpdate n (εTerm l (TPred p))
+                   (εTerm l (TJust (TLabeled l1 v1)))
+                   (εTerm l TNothing))))
+  ==. ε l (eval (Pg lc (εDB l db)
+                  (TUpdate n (εTerm l (TPred p))
+                   (TJust (εTerm l  (TLabeled l1 v1)))
+                   TNothing)))
+      
+  ==. ε l (eval (Pg lc (εDB l db) (TUpdate n (TPred p)
+                                     (TJust (TLabeled l1 εv1))
+                                     TNothing)))
+      ? εDBIdempotent l db
+      ? assert (εlc' == lc')
+      ? assert (not (εlc' `canFlowTo` l))
+      ? assume (εDB l (updateDBJN db n p v1) == εDB l db)
+  ==. ε l (Pg εlc' (εDB l db) (TReturn TException))
+  ==. PgHole (εDB l (εDB l db) )
+  ==. PgHole (εDB l db)
+
+  ==. PgHole (εDB l (updateDBJN db n p v1))
+  ==. ε l (Pg lc' (updateDBJN db n p v1) (TReturn TUnit))
+  ==. ε l (eval (Pg lc db (TUpdate n (TPred p) (TJust (TLabeled l1 v1)) TNothing)))
+  *** QED
+  | not a && εa
+
+  =   ε l (eval (ε l (Pg lc db (TUpdate n (TPred p)
+                                  (TJust (TLabeled l1 v1))
+                                   TNothing))))
+  ==. ε l (eval (Pg lc (εDB l db)
+                  (εTerm l (TUpdate n (TPred p)
+                             (TJust (TLabeled l1 v1))
+                             TNothing))))       
+  ==. ε l (eval (Pg lc (εDB l db)
+                  (TUpdate n (εTerm l (TPred p))
+                   (εTerm l (TJust (TLabeled l1 v1)))
+                   (εTerm l TNothing))))
+  ==. ε l (eval (Pg lc (εDB l db)
+                  (TUpdate n (εTerm l (TPred p))
+                   (TJust (εTerm l  (TLabeled l1 v1)))
+                   TNothing)))
+
+  ==. ε l (eval (Pg lc (εDB l db) (TUpdate n (TPred p)
+                                     (TJust (TLabeled l1 εv1))
+                                     TNothing)))
+      ? εDBIdempotent l db
+      ? assert (εlc' == lc')
+      ? assert (not (εlc' `canFlowTo` l))
+      ? assume (εDB l (updateDBJN (εDB l db) n p εv1) == εDB l db)      
+  ==. ε l (Pg εlc' (updateDBJN (εDB l db) n p εv1) (TReturn TUnit))
+  ==. PgHole (εDB l (updateDBJN (εDB l db) n p εv1))
+
+  ==. PgHole (εDB l db)
+  ==. ε l (Pg lc' db (TReturn TException))
+  ==. ε l (eval (Pg lc db (TUpdate n (TPred p) (TJust (TLabeled l1 v1)) TNothing)))
+  *** QED
+
   
   where
     ti = tableInfo t
